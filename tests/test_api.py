@@ -6,13 +6,14 @@ import json
 import mock
 import xml.etree.ElementTree as ElementTree
 import xmlformatter
-from bs4 import BeautifulSoup
 
-from django.test import TestCase
+from bs4 import BeautifulSoup
+from unittest import TestCase
 from freezegun import freeze_time
 
-from popresearch.cmix.api import CmixAPI, default_cmix_api, CMIX_SERVICES
-from popresearch.cmix.error import CmixError
+from src.api import CmixAPI, default_cmix_api, CMIX_SERVICES
+from src.error import CmixError
+
 from popresearch.cmix.parsing.concepts import create_legacy_concept
 from popresearch.cmix.parsing.logic import create_page_logic
 from popresearch.cmix.parsing.page import create_media_page, create_question_page
@@ -22,8 +23,8 @@ from popresearch.cmix.parsing.survey import generate_survey_xml, \
 from popresearch.models import SURVEY_TYPE_COMPARISON, SURVEY_TYPE_CREATIVE, \
     SURVEY_TYPE_CUSTOM, SURVEY_TYPE_DESIGN, SURVEY_TYPE_INSTANT, \
     SURVEY_TYPE_FORCEDEXPOSURE, SURVEY_TYPE_TRACKING, \
-    AmeritestImage, AmeritestRequest, CmixDataArchive, CmixSurvey, \
-    Survey, User
+    CmixDataArchive, CmixSurvey, \
+    Survey
 
 from .factories import SurveyFactory, UserFactory
 
@@ -32,7 +33,7 @@ class TestCmixAPI(TestCase):
     def setUp(self):
         self.cmix_api = default_cmix_api()
         self.cmix_api._authentication_headers = {'Authorization': 'Bearer test'}
-        self.user = User.objects.create(email="Pop.Engineering@dynata.com")
+        self.user = UserFactory.create_safe()
         self.survey = Survey.objects.create(user=self.user, name="Test Survey")
         self.cmix_survey = CmixSurvey.objects.create(survey=self.survey, cmix_id=42)
 
@@ -367,20 +368,6 @@ class TestCmixParsing(TestCase):
             self.creative_survey = SurveyFactory.create(
                 user=self.user, survey_type=SURVEY_TYPE_CUSTOM, json=survey_json, status=Survey.COMPLETED)
 
-        with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_creativepop.json', "r") as data_file:
-            survey_json = json.load(data_file)
-            self.creative_survey_with_ameritest = SurveyFactory.create(
-                name="CreativePop With Ameritest Enabled", user=self.user,
-                survey_type=SURVEY_TYPE_CREATIVE, json=survey_json, status=Survey.COMPLETED)
-            question_id = "cjmkupdw300042a7j15mh37np"
-            ar = AmeritestRequest.objects.create(question_id=question_id, survey=self.creative_survey_with_ameritest)
-            AmeritestImage.objects.create(
-                ameritest_request=ar, question_id=question_id, image_url="http://www.popresearch.com/favicon.png")
-            AmeritestImage.objects.create(
-                ameritest_request=ar, question_id=question_id, image_url="http://www.popresearch.com/favicon.png")
-            AmeritestImage.objects.create(
-                ameritest_request=ar, question_id=question_id, image_url="http://www.popresearch.com/favicon.png")
-
         with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_creativepop_POP-2044.json', "r") as data_file:
             survey_json = json.load(data_file)
             self.creative_survey_2044 = SurveyFactory.create(
@@ -680,19 +667,6 @@ class TestCmixParsing(TestCase):
         self.assertEqual(len(demo_section.find_all('page')), 9)
 
     @freeze_time("2001-01-01 00:00:00")
-    def test_creativepop_markup(self):
-        self.maxDiff = None
-        generated_xml = generate_survey_xml_strings_and_secondary_keys(self.creative_survey_with_ameritest)[0][1]
-        generated_xml = self.formatter.format_string(generated_xml)
-        generated_lines = generated_xml.splitlines()
-        # with open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_creativepop.xml', "w") as data_file:
-        #    data_file.write(generated_xml)
-        with open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_creativepop.xml', "r") as data_file:
-            expected_xml = data_file.read()
-        expected_lines = expected_xml.splitlines()
-        self.helper_compare_lines(generated_lines, expected_lines)
-
-    @freeze_time("2001-01-01 00:00:00")
     def test_creativepop_markup_2044(self):
         self.maxDiff = None
         generated_xml = generate_survey_xml_strings_and_secondary_keys(self.creative_survey_2044)[0][1]
@@ -938,61 +912,6 @@ class TestCmixParsing(TestCase):
             expected_xml = data_file.read().encode('utf-8')
         expected_lines = expected_xml.splitlines()
         self.helper_compare_lines(generated_lines, expected_lines)
-
-    @freeze_time("2001-01-01 00:00:00")
-    def test_forcedexposure_markup_with_ameritest(self):
-        self.maxDiff = None
-
-        with open(
-                'backend/apps/popresearch/tests/test_files/cmix/json/survey_forcedexposure_ameritest.json',
-                "r") as json_data_file:
-            survey_json = json.load(json_data_file)
-            forcedexposure_survey_cell = Survey.objects.create(
-                user=self.user,
-                name="ForcedExposure Survey Test",
-                survey_type=SURVEY_TYPE_FORCEDEXPOSURE,
-                json=survey_json
-            )
-            forcedexposure_survey_cell.id = 6
-            forcedexposure_survey_cell.save()
-        question_id = "cjeq1o413002q2a7j1puskr0r"
-        ar = AmeritestRequest.objects.create(question_id=question_id, survey=forcedexposure_survey_cell, deleted=False)
-        AmeritestImage.objects.create(
-            ameritest_request=ar,
-            question_id=question_id,
-            image_url="http://www.popresearch.com/favicon.png"
-        )
-
-        strings_and_keys = generate_survey_xml_strings_and_secondary_keys(forcedexposure_survey_cell)
-        generated_key = strings_and_keys[0][0]
-        self.assertEqual(generated_key, '0-United States')
-        generated_xml = strings_and_keys[0][1]
-        generated_xml = self.formatter.format_string(generated_xml)
-        generated_lines = generated_xml.splitlines()
-        # with open(
-        #        'backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_ameritest.xml',
-        #        "w") as data_file:
-        #    data_file.write(generated_xml)
-        with open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_ameritest.xml', "r") as data_file:
-            expected_xml = data_file.read()
-        expected_lines = expected_xml.splitlines()
-        self.helper_compare_lines(generated_lines, expected_lines)
-
-        second_cell_generated_key = strings_and_keys[1][0]
-        self.assertEqual(second_cell_generated_key, '1-United States')
-        second_cell_generated_xml = strings_and_keys[1][1]
-        second_cell_generated_xml = self.formatter.format_string(second_cell_generated_xml)
-        second_cell_generated_lines = second_cell_generated_xml.splitlines()
-        # with open(
-        #        'backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_ameritest_second_cell.xml',
-        #        "w") as data_file:
-        #    data_file.write(second_cell_generated_xml)
-        with open(
-                'backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_ameritest_second_cell.xml',
-                "r") as data_file:
-            second_cell_expected_xml = data_file.read()
-        second_cell_expected_lines = second_cell_expected_xml.splitlines()
-        self.helper_compare_lines(second_cell_generated_lines, second_cell_expected_lines)
 
     @freeze_time("2001-01-01 00:00:00")
     def test_comparisonpop_markup(self):

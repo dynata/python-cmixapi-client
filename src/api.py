@@ -4,10 +4,8 @@ import requests
 import logging
 import os
 
-from popresearch.models import CmixSurvey
-
 from .error import CmixError
-from .parsing import generate_survey_xml_strings_and_secondary_keys
+# from .parsing import generate_survey_xml_strings_and_secondary_keys
 
 log = logging.getLogger(__name__)
 
@@ -321,19 +319,18 @@ class CmixAPI(object):
             )
         return response
 
-    def create_survey(self, survey, wave_number=None):
+
+#    def create_survey(self, survey, wave_number=None):
         '''
             This function will create a survey on CMIX and set the survey's status to 'LIVE'.
         '''
+        """
         self.check_auth_headers()
 
         log.debug('Sending Survey to new CMIX API: {}'.format(survey.name))
         strings_and_keys = generate_survey_xml_strings_and_secondary_keys(survey, wave_number)
         cmix_responses = []
         for secondary_key, xml_string in strings_and_keys:
-            # Don't try to create survey if there's alread one there
-            if CmixSurvey.objects.filter(survey=survey, secondary_key=secondary_key).exists():
-                continue
 
             # Give up after 10 tries
             if survey.failed_creation_attempts >= 10:
@@ -359,16 +356,7 @@ class CmixAPI(object):
             cmix_project_id = response_json.get('projectId')
             log.debug('Successfully created CMIX Survey {}.'.format(cmix_id))
 
-            CmixSurvey.objects.create(
-                survey=survey,
-                cmix_id=cmix_id,
-                cmix_project_id=cmix_project_id,
-                status='created',
-                cmix_status='design',
-                results_requested=False,
-                secondary_key=secondary_key,
-            )
-
             self.update_project(response_json.get('projectId'), status=self.SURVEY_STATUS_DESIGN)
 
         return cmix_responses
+        """
