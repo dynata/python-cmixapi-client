@@ -9,7 +9,7 @@ import xmlformatter
 from bs4 import BeautifulSoup
 
 from django.conf import settings
-from django.test import TestCase, override_settings
+from django.test import TestCase
 from freezegun import freeze_time
 
 from popresearch.cmix.api import CmixAPI, default_cmix_api
@@ -18,7 +18,8 @@ from popresearch.cmix.parsing.concepts import create_legacy_concept
 from popresearch.cmix.parsing.logic import create_page_logic
 from popresearch.cmix.parsing.page import create_media_page, create_question_page
 from popresearch.cmix.parsing.section import create_demographic_questions_section
-from popresearch.cmix.parsing.survey import generate_survey_xml, generate_survey_xml_string, generate_survey_xml_strings_and_secondary_keys
+from popresearch.cmix.parsing.survey import generate_survey_xml, \
+    generate_survey_xml_string, generate_survey_xml_strings_and_secondary_keys
 from popresearch.models import SURVEY_TYPE_COMPARISON, SURVEY_TYPE_CREATIVE, \
     SURVEY_TYPE_CUSTOM, SURVEY_TYPE_DESIGN, SURVEY_TYPE_INSTANT, \
     SURVEY_TYPE_FORCEDEXPOSURE, SURVEY_TYPE_TRACKING, \
@@ -158,7 +159,8 @@ class TestCmixAPI(TestCase):
 
     def test_get_survey_test_url(self):
         self.cmix_api._authentication_headers = {'Authentication': 'Bearer test'}
-        correct_test_link = '{}/#/?cmixSvy={}&cmixTest={}'.format(settings.CMIX_SERVICES['test']['BASE_URL'], self.cmix_survey.id, 'test')
+        correct_test_link = '{}/#/?cmixSvy={}&cmixTest={}'.format(
+            settings.CMIX_SERVICES['test']['BASE_URL'], self.cmix_survey.id, 'test')
 
         with mock.patch('popresearch.cmix.api.requests') as mock_request:
             mock_get = mock.Mock()
@@ -214,7 +216,8 @@ class TestCmixAPI(TestCase):
             expected_url = '{}/surveys?status={}'.format(settings.CMIX_SERVICES['survey']['BASE_URL'], 'LIVE')
             mock_request.get.assert_any_call(expected_url, headers=mock.ANY)
 
-            expected_url_with_params = '{}/surveys?status={}&hello=world&test=params'.format(settings.CMIX_SERVICES['survey']['BASE_URL'], 'LIVE')
+            expected_url_with_params = '{}/surveys?status={}&hello=world&test=params'.format(
+                settings.CMIX_SERVICES['survey']['BASE_URL'], 'LIVE')
             self.cmix_api.get_surveys('LIVE', extra_params=["hello=world", "test=params"])
             mock_request.get.assert_any_call(expected_url_with_params, headers=self.cmix_api._authentication_headers)
 
@@ -236,7 +239,8 @@ class TestCmixAPI(TestCase):
             question_b = 124
             response_id = 125
             self.cmix_api.fetch_banner_filter(self.cmix_survey.id, question_a, question_b, response_id)
-            expected_url = '{}/surveys/{}/response-counts'.format(settings.CMIX_SERVICES['reporting']['BASE_URL'], self.cmix_survey.id)
+            expected_url = '{}/surveys/{}/response-counts'.format(
+                settings.CMIX_SERVICES['reporting']['BASE_URL'], self.cmix_survey.id)
             expected_payload = {
                 'testYN': 'LIVE',
                 'status': 'COMPLETE',
@@ -305,7 +309,9 @@ class TestCmixAPI(TestCase):
         self.maxDiff = None
         with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_comparison.json', "r") as json_data_file:
             survey_json = json.load(json_data_file)
-            comparison_survey = Survey.objects.create(user=self.user, name="ComparisonPop with Creative United States No Creative", survey_type=SURVEY_TYPE_COMPARISON, json=survey_json)
+            comparison_survey = Survey.objects.create(
+                user=self.user, name="ComparisonPop with Creative United States No Creative",
+                survey_type=SURVEY_TYPE_COMPARISON, json=survey_json)
         with mock.patch('popresearch.cmix.api.requests') as mock_request:
             mock_post = mock.Mock()
             mock_post.status_code = 200
@@ -323,9 +329,12 @@ class TestCmixAPI(TestCase):
 
     def test_fail_survey_creation_quits_after_10_fails(self):
         self.maxDiff = None
-        with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_creativepop_no_ameritest.json', "r") as json_data_file:
+        with open(
+                'backend/apps/popresearch/tests/test_files/cmix/json/survey_creativepop_no_ameritest.json',
+                "r") as json_data_file:
             survey_json = json.load(json_data_file)
-            creativepop_survey = Survey.objects.create(user=self.user, name="CreativePop to mock fail", survey_type=SURVEY_TYPE_CREATIVE, json=survey_json)
+            creativepop_survey = Survey.objects.create(
+                user=self.user, name="CreativePop to mock fail", survey_type=SURVEY_TYPE_CREATIVE, json=survey_json)
         with mock.patch('popresearch.cmix.api.requests') as mock_request:
             mock_post = mock.Mock()
             mock_post.status_code = 500
@@ -339,7 +348,7 @@ class TestCmixAPI(TestCase):
             for i in range(1, 11):
                 try:
                     self.cmix_api.create_survey(creativepop_survey)
-                except Exception as exc:
+                except Exception:
                     "Failure throws an exception we're ignoring here."
                 self.assertEqual(CmixSurvey.objects.filter(survey=creativepop_survey).count(), 0)
                 self.assertEqual(Survey.objects.filter(id=creativepop_survey.id)[0].failed_creation_attempts, i)
@@ -356,76 +365,131 @@ class TestCmixParsing(TestCase):
 
         with open('backend/apps/popresearch/tests/test_files/cmix/test_custompop_survey.json', "r") as data_file:
             survey_json = json.load(data_file)
-            self.creative_survey = SurveyFactory.create(user=self.user, survey_type=SURVEY_TYPE_CUSTOM, json=survey_json, status=Survey.COMPLETED)
+            self.creative_survey = SurveyFactory.create(
+                user=self.user, survey_type=SURVEY_TYPE_CUSTOM, json=survey_json, status=Survey.COMPLETED)
 
         with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_creativepop.json', "r") as data_file:
             survey_json = json.load(data_file)
-            self.creative_survey_with_ameritest = SurveyFactory.create(name="CreativePop With Ameritest Enabled", user=self.user, survey_type=SURVEY_TYPE_CREATIVE, json=survey_json, status=Survey.COMPLETED)
+            self.creative_survey_with_ameritest = SurveyFactory.create(
+                name="CreativePop With Ameritest Enabled", user=self.user,
+                survey_type=SURVEY_TYPE_CREATIVE, json=survey_json, status=Survey.COMPLETED)
             question_id = "cjmkupdw300042a7j15mh37np"
             ar = AmeritestRequest.objects.create(question_id=question_id, survey=self.creative_survey_with_ameritest)
-            AmeritestImage.objects.create(ameritest_request=ar, question_id=question_id, image_url="http://www.popresearch.com/favicon.png")
-            AmeritestImage.objects.create(ameritest_request=ar, question_id=question_id, image_url="http://www.popresearch.com/favicon.png")
-            AmeritestImage.objects.create(ameritest_request=ar, question_id=question_id, image_url="http://www.popresearch.com/favicon.png")
+            AmeritestImage.objects.create(
+                ameritest_request=ar, question_id=question_id, image_url="http://www.popresearch.com/favicon.png")
+            AmeritestImage.objects.create(
+                ameritest_request=ar, question_id=question_id, image_url="http://www.popresearch.com/favicon.png")
+            AmeritestImage.objects.create(
+                ameritest_request=ar, question_id=question_id, image_url="http://www.popresearch.com/favicon.png")
 
         with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_creativepop_POP-2044.json', "r") as data_file:
             survey_json = json.load(data_file)
-            self.creative_survey_2044 = SurveyFactory.create(name="CreativePop for POP-2044", user=self.user, survey_type=SURVEY_TYPE_CREATIVE, json=survey_json, status=Survey.COMPLETED)
+            self.creative_survey_2044 = SurveyFactory.create(
+                name="CreativePop for POP-2044", user=self.user,
+                survey_type=SURVEY_TYPE_CREATIVE, json=survey_json, status=Survey.COMPLETED)
 
         with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_creativepop_POP-2158.json', "r") as data_file:
             survey_json = json.load(data_file)
-            self.creative_survey_2158 = SurveyFactory.create(name="CreativePop for POP-2158", user=self.user, survey_type=SURVEY_TYPE_CREATIVE, json=survey_json, status=Survey.COMPLETED)
+            self.creative_survey_2158 = SurveyFactory.create(
+                name="CreativePop for POP-2158", user=self.user,
+                survey_type=SURVEY_TYPE_CREATIVE, json=survey_json, status=Survey.COMPLETED)
 
         with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_forcedexposure.json', "r") as data_file:
             survey_json = json.load(data_file)
-            self.forcedexposure_survey = SurveyFactory.create(name="ForcedExposure XML Test", user=self.user, survey_type=SURVEY_TYPE_CREATIVE, json=survey_json, status=Survey.COMPLETED)
+            self.forcedexposure_survey = SurveyFactory.create(
+                name="ForcedExposure XML Test", user=self.user,
+                survey_type=SURVEY_TYPE_CREATIVE, json=survey_json, status=Survey.COMPLETED)
 
-        with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_forcedexposure_with_language.json', "r") as data_file:
+        with open(
+                'backend/apps/popresearch/tests/test_files/cmix/json/survey_forcedexposure_with_language.json',
+                "r") as data_file:
             survey_json = json.load(data_file)
-            self.forcedexposure_survey_with_language = SurveyFactory.create(name="ForcedExposure XML with Language Test", user=self.user, survey_type=SURVEY_TYPE_CREATIVE, json=survey_json, status=Survey.COMPLETED)
+            self.forcedexposure_survey_with_language = SurveyFactory.create(
+                name="ForcedExposure XML with Language Test", user=self.user,
+                survey_type=SURVEY_TYPE_CREATIVE, json=survey_json, status=Survey.COMPLETED)
 
         with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_comparison.json', "r") as data_file:
             survey_json = json.load(data_file)
-            self.comparison_survey = SurveyFactory.create(name="ComparsionPop With Creative", user=self.user, survey_type=SURVEY_TYPE_CREATIVE, json=survey_json, status=Survey.COMPLETED)
+            self.comparison_survey = SurveyFactory.create(
+                name="ComparsionPop With Creative", user=self.user,
+                survey_type=SURVEY_TYPE_CREATIVE, json=survey_json, status=Survey.COMPLETED)
 
         with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_trackingpop.json', "r") as data_file:
             survey_json = json.load(data_file)
-            self.trackingpop_survey = SurveyFactory.create(name="TrackingPop Survey", user=self.user, survey_type=SURVEY_TYPE_TRACKING, json=survey_json, status=Survey.COMPLETED)
+            self.trackingpop_survey = SurveyFactory.create(
+                name="TrackingPop Survey", user=self.user,
+                survey_type=SURVEY_TYPE_TRACKING, json=survey_json, status=Survey.COMPLETED)
 
         with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_trackingpop_no_ads.json', "r") as data_file:
             survey_json = json.load(data_file)
-            self.trackingpop_survey_no_ads = SurveyFactory.create(name="TrackingPop No Ads", user=self.user, survey_type=SURVEY_TYPE_TRACKING, json=survey_json, status=Survey.COMPLETED)
+            self.trackingpop_survey_no_ads = SurveyFactory.create(
+                name="TrackingPop No Ads", user=self.user,
+                survey_type=SURVEY_TYPE_TRACKING, json=survey_json, status=Survey.COMPLETED)
 
         with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_trackingpop_with_ads.json', "r") as data_file:
             survey_json = json.load(data_file)
-            self.trackingpop_survey_with_ads = SurveyFactory.create(name="TrackingPop With Ads", user=self.user, survey_type=SURVEY_TYPE_TRACKING, json=survey_json, status=Survey.COMPLETED)
+            self.trackingpop_survey_with_ads = SurveyFactory.create(
+                name="TrackingPop With Ads", user=self.user,
+                survey_type=SURVEY_TYPE_TRACKING, json=survey_json, status=Survey.COMPLETED)
 
         with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_comparison_no_creative.json', "r") as data_file:
             survey_json = json.load(data_file)
-            self.comparison_survey_no_creative = SurveyFactory.create(name="ComparsionPop Without Creative", user=self.user, survey_type=SURVEY_TYPE_CREATIVE, json=survey_json, status=Survey.COMPLETED)
+            self.comparison_survey_no_creative = SurveyFactory.create(
+                name="ComparsionPop Without Creative",
+                user=self.user,
+                survey_type=SURVEY_TYPE_CREATIVE,
+                json=survey_json,
+                status=Survey.COMPLETED)
 
         with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_design_logo.json', "r") as data_file:
             survey_json = json.load(data_file)
-            self.designpop_survey_logo = SurveyFactory.create(name="DesignPop Logo", user=self.user, survey_type=SURVEY_TYPE_DESIGN, json=survey_json, status=Survey.COMPLETED)
+            self.designpop_survey_logo = SurveyFactory.create(
+                name="DesignPop Logo",
+                user=self.user,
+                survey_type=SURVEY_TYPE_DESIGN,
+                json=survey_json,
+                status=Survey.COMPLETED)
 
         with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_design_packaging.json', "r") as data_file:
             survey_json = json.load(data_file)
-            self.designpop_survey_packaging = SurveyFactory.create(name="DesignPop Packaging", user=self.user, survey_type=SURVEY_TYPE_DESIGN, json=survey_json, status=Survey.COMPLETED)
+            self.designpop_survey_packaging = SurveyFactory.create(
+                name="DesignPop Packaging",
+                user=self.user,
+                survey_type=SURVEY_TYPE_DESIGN,
+                json=survey_json,
+                status=Survey.COMPLETED)
 
         with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_design_naming.json', "r") as data_file:
             survey_json = json.load(data_file)
-            self.designpop_survey_naming = SurveyFactory.create(name="DesignPop Naming", user=self.user, survey_type=SURVEY_TYPE_DESIGN, json=survey_json, status=Survey.COMPLETED)
+            self.designpop_survey_naming = SurveyFactory.create(
+                name="DesignPop Naming",
+                user=self.user,
+                survey_type=SURVEY_TYPE_DESIGN,
+                json=survey_json,
+                status=Survey.COMPLETED)
 
         with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_design_tagline.json', "r") as data_file:
             survey_json = json.load(data_file)
-            self.designpop_survey_tagline = SurveyFactory.create(name="DesignPop Tagline", user=self.user, survey_type=SURVEY_TYPE_DESIGN, json=survey_json, status=Survey.COMPLETED)
+            self.designpop_survey_tagline = SurveyFactory.create(
+                name="DesignPop Tagline",
+                user=self.user,
+                survey_type=SURVEY_TYPE_DESIGN,
+                json=survey_json,
+                status=Survey.COMPLETED)
 
         with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_instantpop.json', "r") as data_file:
             survey_json = json.load(data_file)
-            self.instantpop_survey = SurveyFactory.create(name="InstantPop", user=self.user, survey_type=SURVEY_TYPE_INSTANT, json=survey_json, status=Survey.COMPLETED)
+            self.instantpop_survey = SurveyFactory.create(
+                name="InstantPop", user=self.user, survey_type=SURVEY_TYPE_INSTANT, json=survey_json, status=Survey.COMPLETED)
 
         with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_custompop_POP-2214.json', "r") as data_file:
             survey_json = json.load(data_file)
-            self.custompop_survey_shuffle_none = SurveyFactory.create(name="POP-2214", user=self.user, survey_type=SURVEY_TYPE_CUSTOM, json=survey_json, status=Survey.COMPLETED)
+            self.custompop_survey_shuffle_none = SurveyFactory.create(
+                name="POP-2214",
+                user=self.user,
+                survey_type=SURVEY_TYPE_CUSTOM,
+                json=survey_json,
+                status=Survey.COMPLETED)
 
     def helper_compare_xml_vs_expected(self, json_filename, test_function, expected_soup_filename):
         with open('backend/apps/popresearch/tests/test_files/cmix/json/{}'.format(json_filename), 'r') as data_file:
@@ -468,10 +532,12 @@ class TestCmixParsing(TestCase):
         self.helper_compare_xml_vs_expected('numeric_question.json', create_question_page, 'numeric_question.xml')
 
     def test_create_numeric_question_with_answer_ranges_page(self):
-        self.helper_compare_xml_vs_expected('numeric_question_with_answer_ranges.json', create_question_page, 'numeric_question_with_answer_ranges.xml')
+        self.helper_compare_xml_vs_expected(
+            'numeric_question_with_answer_ranges.json', create_question_page, 'numeric_question_with_answer_ranges.xml')
 
     def test_numeric_question_with_anchoring(self):
-        self.helper_compare_xml_vs_expected('numeric_question_with_anchoring.json', create_question_page, 'numeric_question_with_anchoring.xml')
+        self.helper_compare_xml_vs_expected(
+            'numeric_question_with_anchoring.json', create_question_page, 'numeric_question_with_anchoring.xml')
 
     def test_create_rating_grid_question_page(self):
         self.maxDiff = None
@@ -479,11 +545,13 @@ class TestCmixParsing(TestCase):
 
     def test_create_vertical_radio_grid_question_page(self):
         self.maxDiff = None
-        self.helper_compare_xml_vs_expected('vertical_radio_grid_question.json', create_question_page, 'vertical_radio_grid_question.xml')
+        self.helper_compare_xml_vs_expected(
+            'vertical_radio_grid_question.json', create_question_page, 'vertical_radio_grid_question.xml')
 
     def test_create_horizontal_grid_question_page(self):
         self.maxDiff = None
-        self.helper_compare_xml_vs_expected('horizontal_radio_grid_question.json', create_question_page, 'horizontal_radio_grid_question.xml')
+        self.helper_compare_xml_vs_expected(
+            'horizontal_radio_grid_question.json', create_question_page, 'horizontal_radio_grid_question.xml')
 
     def test_create_checkbox_grid_question_page(self):
         self.maxDiff = None
@@ -496,18 +564,25 @@ class TestCmixParsing(TestCase):
         self.helper_compare_xml_vs_expected('checkbox_question.json', create_question_page, 'checkbox_question.xml')
 
     def test_create_checkbox_question_with_types_page(self):
-        self.helper_compare_xml_vs_expected('checkbox_question_with_types.json', create_question_page, 'checkbox_question_with_types.xml')
+        self.helper_compare_xml_vs_expected(
+            'checkbox_question_with_types.json', create_question_page, 'checkbox_question_with_types.xml')
 
     def test_create_checkbox_with_shuffle_question_page(self):
-        self.helper_compare_xml_vs_expected('checkbox_question_shuffle.json', create_question_page, 'checkbox_question_shuffle.xml')
+        self.helper_compare_xml_vs_expected(
+            'checkbox_question_shuffle.json', create_question_page, 'checkbox_question_shuffle.xml')
 
     def test_create_checkbox_question_exclusive_page(self):
         self.maxDiff = None
-        self.helper_compare_xml_vs_expected('checkbox_question_exclusive.json', create_question_page, 'checkbox_question_exclusive.xml')
+        self.helper_compare_xml_vs_expected(
+            'checkbox_question_exclusive.json', create_question_page, 'checkbox_question_exclusive.xml')
 
     def test_create_checkbox_question_exclusive_no_ordering_page(self):
         self.maxDiff = None
-        self.helper_compare_xml_vs_expected('checkbox_question_exclusive_no_ordering.json', create_question_page, 'checkbox_question_exclusive_no_ordering.xml')
+        self.helper_compare_xml_vs_expected(
+            'checkbox_question_exclusive_no_ordering.json',
+            create_question_page,
+            'checkbox_question_exclusive_no_ordering.xml'
+        )
 
     def test_create_text_question_page(self):
         self.helper_compare_xml_vs_expected('text_question.json', create_question_page, 'text_question.xml')
@@ -570,7 +645,8 @@ class TestCmixParsing(TestCase):
     def test_create_media_page(self):
         self.maxDiff = None
         page_xml = ElementTree.tostring(create_media_page({
-            "url": "https://popresearch.s3.amazonaws.com/userData/uploads/ryqcsw6nb-Fast%20Food_KFC_Lieutenant%20Col.%20Cooks.jpg",
+            "url":
+            "https://popresearch.s3.amazonaws.com/userData/uploads/ryqcsw6nb-Fast%20Food_KFC_Lieutenant%20Col.%20Cooks.jpg",
             "brand": "KFC",
             "filename": "Fast Food_KFC_Lieutenant Col. Cooks.jpg",
             "ad_name": "Lieutenant Col",
@@ -646,9 +722,15 @@ class TestCmixParsing(TestCase):
     @freeze_time("2001-01-01 00:00:00")
     def test_forcedexposure_markup(self):
         self.maxDiff = None
-        with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_forcedexposure_cell.json', "r") as json_data_file:
+        with open(
+                'backend/apps/popresearch/tests/test_files/cmix/json/survey_forcedexposure_cell.json',
+                "r") as json_data_file:
             survey_json = json.load(json_data_file)
-            forcedexposure_survey_cell = Survey(name="ForcedExposure Survey Test Curry", survey_type=SURVEY_TYPE_FORCEDEXPOSURE, json=survey_json)
+            forcedexposure_survey_cell = Survey(
+                name="ForcedExposure Survey Test Curry",
+                survey_type=SURVEY_TYPE_FORCEDEXPOSURE,
+                json=survey_json
+            )
         generated_xml = generate_survey_xml_string(forcedexposure_survey_cell)
         generated_xml = self.formatter.format_string(generated_xml)
         generated_lines = generated_xml.splitlines()
@@ -662,9 +744,15 @@ class TestCmixParsing(TestCase):
     @freeze_time("2001-01-01 00:00:00")
     def test_forcedexposure_markup_cell_keys(self):
         self.maxDiff = None
-        with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_forcedexposure.json', "r") as json_data_file:
+        with open(
+                'backend/apps/popresearch/tests/test_files/cmix/json/survey_forcedexposure.json',
+                "r") as json_data_file:
             survey_json = json.load(json_data_file)
-            forcedexposure_survey_cell = Survey(name="ForcedExposure Survey Test Curry", survey_type=SURVEY_TYPE_FORCEDEXPOSURE, json=survey_json)
+            forcedexposure_survey_cell = Survey(
+                name="ForcedExposure Survey Test Curry",
+                survey_type=SURVEY_TYPE_FORCEDEXPOSURE,
+                json=survey_json
+            )
         strings_and_keys = generate_survey_xml_strings_and_secondary_keys(forcedexposure_survey_cell)
         self.assertEqual(len(strings_and_keys), 7)  # 7 cells
         generated_key = strings_and_keys[0][0]
@@ -673,15 +761,25 @@ class TestCmixParsing(TestCase):
     @freeze_time("2001-01-01 00:00:00")
     def test_forcedexposure_cell_with_language(self):
         self.maxDiff = None
-        with io.open('backend/apps/popresearch/tests/test_files/cmix/json/survey_forcedexposure_cell_french.json', mode="r", encoding="utf-8") as json_data_file:
+        with io.open(
+                'backend/apps/popresearch/tests/test_files/cmix/json/survey_forcedexposure_cell_french.json',
+                mode="r",
+                encoding="utf-8") as json_data_file:
             survey_json = json.load(json_data_file)
-            forcedexposure_survey_cell = Survey(name="ForcedExposure Survey Test Curry", survey_type=SURVEY_TYPE_FORCEDEXPOSURE, json=survey_json)
+            forcedexposure_survey_cell = Survey(
+                name="ForcedExposure Survey Test Curry",
+                survey_type=SURVEY_TYPE_FORCEDEXPOSURE,
+                json=survey_json
+            )
         generated_xml = generate_survey_xml_string(forcedexposure_survey_cell)
         generated_xml = self.formatter.format_string(generated_xml.encode('utf-8'))
         generated_lines = generated_xml.splitlines()
         # with open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_french.xml', "w") as data_file:
         #    data_file.write(generated_xml)
-        with io.open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_french.xml', mode="r", encoding="utf-8") as data_file:
+        with io.open(
+                'backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_french.xml',
+                mode="r",
+                encoding="utf-8") as data_file:
             expected_xml = data_file.read().encode('utf-8')
         expected_lines = expected_xml.splitlines()
         self.helper_compare_lines(generated_lines, expected_lines)
@@ -689,9 +787,15 @@ class TestCmixParsing(TestCase):
     @freeze_time("2001-01-01 00:00:00")
     def test_forcedexposure_markup_with_language(self):
         self.maxDiff = None
-        with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_forcedexposure_with_language.json', "r") as json_data_file:
+        with open(
+                'backend/apps/popresearch/tests/test_files/cmix/json/survey_forcedexposure_with_language.json',
+                "r") as json_data_file:
             survey_json = json.load(json_data_file)
-            forcedexposure_survey_cell = Survey.objects.create(user=self.user, name="ForcedExposure Language Test", survey_type=SURVEY_TYPE_FORCEDEXPOSURE, json=survey_json)
+            forcedexposure_survey_cell = Survey.objects.create(
+                user=self.user, name="ForcedExposure Language Test",
+                survey_type=SURVEY_TYPE_FORCEDEXPOSURE,
+                json=survey_json
+            )
             forcedexposure_survey_cell.id = 6
             forcedexposure_survey_cell.save()
 
@@ -702,9 +806,14 @@ class TestCmixParsing(TestCase):
         generated_xml = self.formatter.format_string(generated_xml.encode('utf-8'))
         generated_lines = generated_xml.splitlines()
         self.assertEqual(generated_key, '0-United States')
-        # with open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_with_language_united_states.xml', "w") as data_file:
+        # with open(
+        #        'backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_with_language_united_states.xml',
+        #        "w") as data_file:
         #    data_file.write(generated_xml)
-        with io.open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_with_language_united_states.xml', mode="r", encoding="utf-8") as data_file:
+        with io.open(
+                'backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_with_language_united_states.xml',
+                mode="r",
+                encoding="utf-8") as data_file:
             expected_xml = data_file.read().encode('utf-8')
         expected_lines = expected_xml.splitlines()
         self.helper_compare_lines(generated_lines, expected_lines)
@@ -714,9 +823,14 @@ class TestCmixParsing(TestCase):
         second_cell_generated_xml = self.formatter.format_string(second_cell_generated_xml.encode('utf-8'))
         second_cell_generated_lines = second_cell_generated_xml.splitlines()
         self.assertEqual(second_cell_generated_key, '0-Japan')
-        # with open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_with_language_japan.xml', "w") as data_file:
+        # with open(
+        #        'backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_with_language_japan.xml',
+        #        "w") as data_file:
         #    data_file.write(second_cell_generated_xml)
-        with io.open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_with_language_japan.xml', mode="r", encoding="utf-8") as data_file:
+        with io.open(
+                'backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_with_language_japan.xml',
+                mode="r",
+                encoding="utf-8") as data_file:
             second_cell_expected_xml = data_file.read().encode('utf-8')
         second_cell_expected_lines = second_cell_expected_xml.splitlines()
         self.helper_compare_lines(second_cell_generated_lines, second_cell_expected_lines)
@@ -724,9 +838,16 @@ class TestCmixParsing(TestCase):
     @freeze_time("2001-01-01 00:00:00")
     def test_forcedexposure_markup_norwegian(self):
         self.maxDiff = None
-        with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_forcedexposure_norwegian.json', "r") as json_data_file:
+        with open(
+                'backend/apps/popresearch/tests/test_files/cmix/json/survey_forcedexposure_norwegian.json',
+                "r") as json_data_file:
             survey_json = json.load(json_data_file)
-            forcedexposure_survey_cell = Survey.objects.create(user=self.user, name="ForcedExposure Norwegian Language Test", survey_type=SURVEY_TYPE_FORCEDEXPOSURE, json=survey_json)
+            forcedexposure_survey_cell = Survey.objects.create(
+                user=self.user,
+                name="ForcedExposure Norwegian Language Test",
+                survey_type=SURVEY_TYPE_FORCEDEXPOSURE,
+                json=survey_json
+            )
             forcedexposure_survey_cell.id = 6
             forcedexposure_survey_cell.save()
 
@@ -737,9 +858,14 @@ class TestCmixParsing(TestCase):
         generated_xml = self.formatter.format_string(generated_xml.encode('utf-8'))
         generated_lines = generated_xml.splitlines()
         self.assertEqual(generated_key, '0-United States')
-        # with open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_no_united_states.xml', "w") as data_file:
+        # with open(
+        #        'backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_no_united_states.xml',
+        #        "w") as data_file:
         #    data_file.write(generated_xml)
-        with io.open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_no_united_states.xml', mode="r", encoding="utf-8") as data_file:
+        with io.open(
+                'backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_no_united_states.xml',
+                mode="r",
+                encoding="utf-8") as data_file:
             expected_xml = data_file.read().encode('utf-8')
         expected_lines = expected_xml.splitlines()
         self.helper_compare_lines(generated_lines, expected_lines)
@@ -747,9 +873,16 @@ class TestCmixParsing(TestCase):
     @freeze_time("2001-01-01 00:00:00")
     def test_forcedexposure_markup_portuguese(self):
         self.maxDiff = None
-        with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_forcedexposure_portuguese.json', "r") as json_data_file:
+        with open(
+                'backend/apps/popresearch/tests/test_files/cmix/json/survey_forcedexposure_portuguese.json',
+                "r") as json_data_file:
             survey_json = json.load(json_data_file)
-            forcedexposure_survey_cell = Survey.objects.create(user=self.user, name="ForcedExposure Portuguese Language Test", survey_type=SURVEY_TYPE_FORCEDEXPOSURE, json=survey_json)
+            forcedexposure_survey_cell = Survey.objects.create(
+                user=self.user,
+                name="ForcedExposure Portuguese Language Test",
+                survey_type=SURVEY_TYPE_FORCEDEXPOSURE,
+                json=survey_json
+            )
             forcedexposure_survey_cell.id = 6
             forcedexposure_survey_cell.save()
 
@@ -760,9 +893,14 @@ class TestCmixParsing(TestCase):
         generated_xml = self.formatter.format_string(generated_xml.encode('utf-8'))
         generated_lines = generated_xml.splitlines()
         self.assertEqual(generated_key, '0-United States')
-        # with open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_pt_united_states.xml', "w") as data_file:
+        # with open(
+        #        'backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_pt_united_states.xml',
+        #        "w") as data_file:
         #    data_file.write(generated_xml)
-        with io.open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_pt_united_states.xml', mode="r", encoding="utf-8") as data_file:
+        with io.open(
+                'backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_pt_united_states.xml',
+                mode="r",
+                encoding="utf-8") as data_file:
             expected_xml = data_file.read().encode('utf-8')
         expected_lines = expected_xml.splitlines()
         self.helper_compare_lines(generated_lines, expected_lines)
@@ -770,9 +908,16 @@ class TestCmixParsing(TestCase):
     @freeze_time("2001-01-01 00:00:00")
     def test_forcedexposure_markup_spanish(self):
         self.maxDiff = None
-        with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_forcedexposure_spanish.json', "r") as json_data_file:
+        with open(
+                'backend/apps/popresearch/tests/test_files/cmix/json/survey_forcedexposure_spanish.json',
+                "r") as json_data_file:
             survey_json = json.load(json_data_file)
-            forcedexposure_survey_cell = Survey.objects.create(user=self.user, name="ForcedExposure Spanish Language Test", survey_type=SURVEY_TYPE_FORCEDEXPOSURE, json=survey_json)
+            forcedexposure_survey_cell = Survey.objects.create(
+                user=self.user,
+                name="ForcedExposure Spanish Language Test",
+                survey_type=SURVEY_TYPE_FORCEDEXPOSURE,
+                json=survey_json
+            )
             forcedexposure_survey_cell.id = 6
             forcedexposure_survey_cell.save()
 
@@ -783,9 +928,14 @@ class TestCmixParsing(TestCase):
         generated_xml = self.formatter.format_string(generated_xml.encode('utf-8'))
         generated_lines = generated_xml.splitlines()
         self.assertEqual(generated_key, '0-United States')
-        # with open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_es_united_states.xml', "w") as data_file:
+        # with open(
+        #        'backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_es_united_states.xml',
+        #        "w") as data_file:
         #    data_file.write(generated_xml)
-        with io.open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_es_united_states.xml', mode="r", encoding="utf-8") as data_file:
+        with io.open(
+                'backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_es_united_states.xml',
+                mode="r",
+                encoding="utf-8") as data_file:
             expected_xml = data_file.read().encode('utf-8')
         expected_lines = expected_xml.splitlines()
         self.helper_compare_lines(generated_lines, expected_lines)
@@ -794,14 +944,25 @@ class TestCmixParsing(TestCase):
     def test_forcedexposure_markup_with_ameritest(self):
         self.maxDiff = None
 
-        with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_forcedexposure_ameritest.json', "r") as json_data_file:
+        with open(
+                'backend/apps/popresearch/tests/test_files/cmix/json/survey_forcedexposure_ameritest.json',
+                "r") as json_data_file:
             survey_json = json.load(json_data_file)
-            forcedexposure_survey_cell = Survey.objects.create(user=self.user, name="ForcedExposure Survey Test", survey_type=SURVEY_TYPE_FORCEDEXPOSURE, json=survey_json)
+            forcedexposure_survey_cell = Survey.objects.create(
+                user=self.user,
+                name="ForcedExposure Survey Test",
+                survey_type=SURVEY_TYPE_FORCEDEXPOSURE,
+                json=survey_json
+            )
             forcedexposure_survey_cell.id = 6
             forcedexposure_survey_cell.save()
         question_id = "cjeq1o413002q2a7j1puskr0r"
         ar = AmeritestRequest.objects.create(question_id=question_id, survey=forcedexposure_survey_cell, deleted=False)
-        AmeritestImage.objects.create(ameritest_request=ar, question_id=question_id, image_url="http://www.popresearch.com/favicon.png")
+        AmeritestImage.objects.create(
+            ameritest_request=ar,
+            question_id=question_id,
+            image_url="http://www.popresearch.com/favicon.png"
+        )
 
         strings_and_keys = generate_survey_xml_strings_and_secondary_keys(forcedexposure_survey_cell)
         generated_key = strings_and_keys[0][0]
@@ -809,7 +970,9 @@ class TestCmixParsing(TestCase):
         generated_xml = strings_and_keys[0][1]
         generated_xml = self.formatter.format_string(generated_xml)
         generated_lines = generated_xml.splitlines()
-        # with open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_ameritest.xml', "w") as data_file:
+        # with open(
+        #        'backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_ameritest.xml',
+        #        "w") as data_file:
         #    data_file.write(generated_xml)
         with open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_ameritest.xml', "r") as data_file:
             expected_xml = data_file.read()
@@ -821,9 +984,13 @@ class TestCmixParsing(TestCase):
         second_cell_generated_xml = strings_and_keys[1][1]
         second_cell_generated_xml = self.formatter.format_string(second_cell_generated_xml)
         second_cell_generated_lines = second_cell_generated_xml.splitlines()
-        # with open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_ameritest_second_cell.xml', "w") as data_file:
+        # with open(
+        #        'backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_ameritest_second_cell.xml',
+        #        "w") as data_file:
         #    data_file.write(second_cell_generated_xml)
-        with open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_ameritest_second_cell.xml', "r") as data_file:
+        with open(
+                'backend/apps/popresearch/tests/test_files/cmix/xml/survey_forcedexposure_ameritest_second_cell.xml',
+                "r") as data_file:
             second_cell_expected_xml = data_file.read()
         second_cell_expected_lines = second_cell_expected_xml.splitlines()
         self.helper_compare_lines(second_cell_generated_lines, second_cell_expected_lines)
@@ -831,9 +998,15 @@ class TestCmixParsing(TestCase):
     @freeze_time("2001-01-01 00:00:00")
     def test_comparisonpop_markup(self):
         self.maxDiff = None
-        with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_comparison_cell.json', "r") as json_data_file:
+        with open(
+                'backend/apps/popresearch/tests/test_files/cmix/json/survey_comparison_cell.json',
+                "r") as json_data_file:
             survey_json = json.load(json_data_file)
-            comparison_survey_cell = Survey(name="ComparisonPop with Creative United States Pop Logo", survey_type=SURVEY_TYPE_COMPARISON, json=survey_json)
+            comparison_survey_cell = Survey(
+                name="ComparisonPop with Creative United States Pop Logo",
+                survey_type=SURVEY_TYPE_COMPARISON,
+                json=survey_json
+            )
         generated_xml = generate_survey_xml_string(comparison_survey_cell)
         generated_xml = self.formatter.format_string(generated_xml)
         generated_lines = generated_xml.splitlines()
@@ -847,9 +1020,15 @@ class TestCmixParsing(TestCase):
     @freeze_time("2001-01-01 00:00:00")
     def test_comparisonpop_markup_no_creative(self):
         self.maxDiff = None
-        with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_comparison_cell_no_creative.json', "r") as json_data_file:
+        with open(
+                'backend/apps/popresearch/tests/test_files/cmix/json/survey_comparison_cell_no_creative.json',
+                "r") as json_data_file:
             survey_json = json.load(json_data_file)
-            comparison_survey_cell = Survey(name="ComparisonPop with Creative United States No Creative", survey_type=SURVEY_TYPE_COMPARISON, json=survey_json)
+            comparison_survey_cell = Survey(
+                name="ComparisonPop with Creative United States No Creative",
+                survey_type=SURVEY_TYPE_COMPARISON,
+                json=survey_json
+            )
         generated_xml = generate_survey_xml_string(comparison_survey_cell)
         generated_xml = self.formatter.format_string(generated_xml)
         generated_lines = generated_xml.splitlines()
@@ -869,7 +1048,10 @@ class TestCmixParsing(TestCase):
         generated_xml = strings_and_keys[0][1]
         generated_xml = self.formatter.format_string(generated_xml.encode('utf-8'))
         generated_lines = generated_xml.splitlines()
-        with io.open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_trackingpop_no_ads.xml', "r", encoding='utf8') as data_file:
+        with io.open(
+                'backend/apps/popresearch/tests/test_files/cmix/xml/survey_trackingpop_no_ads.xml',
+                "r",
+                encoding='utf8') as data_file:
             expected_xml = data_file.read().encode('utf-8')
         expected_lines = expected_xml.splitlines()
         self.helper_compare_lines(generated_lines, expected_lines)
@@ -880,7 +1062,10 @@ class TestCmixParsing(TestCase):
         generated_xml = generate_survey_xml_string(self.trackingpop_survey_with_ads)
         generated_xml = self.formatter.format_string(generated_xml)
         generated_lines = generated_xml.splitlines()
-        with io.open('backend/apps/popresearch/tests/test_files/cmix/xml/survey_trackingpop_with_ads.xml', "r", encoding='utf8') as data_file:
+        with io.open(
+                'backend/apps/popresearch/tests/test_files/cmix/xml/survey_trackingpop_with_ads.xml',
+                "r",
+                encoding='utf8') as data_file:
             expected_xml = data_file.read()
         expected_lines = expected_xml.splitlines()
         self.helper_compare_lines(generated_lines, expected_lines)

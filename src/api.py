@@ -1,13 +1,10 @@
 # -*- coding: utf-8 -*-
 from __future__ import unicode_literals
-import json
 import requests
 import logging
 
 from django.conf import settings
-from popresearch.models import SURVEY_TYPE_CUSTOM, SURVEY_TYPE_CREATIVE, \
-    SURVEY_TYPE_COMPARISON, SURVEY_TYPE_FORCEDEXPOSURE, SURVEY_TYPE_TRACKING,\
-    CmixDataArchive, CmixSurvey, CmixSurveyXml, Survey
+from popresearch.models import CmixDataArchive, CmixSurvey, CmixSurveyXml
 
 
 from .error import CmixError
@@ -67,7 +64,12 @@ class CmixAPI(object):
         try:
             auth_response = requests.post(auth_url, json=auth_payload, headers={"Content-Type": "application/json"})
             if auth_response.status_code != 200:
-                raise CmixError('CMIX returned a non-200 response code: {} and error {}'.format(auth_response.status_code, auth_response.text))
+                raise CmixError(
+                    'CMIX returned a non-200 response code: {} and error {}'.format(
+                        auth_response.status_code,
+                        auth_response.text
+                    )
+                )
         except Exception as e:
             raise CmixError('Could not request authorization from CMIX. Error: {}'.format(e))
         auth_json = auth_response.json()
@@ -78,7 +80,14 @@ class CmixAPI(object):
 
     def fetch_banner_filter(self, survey_id, question_a, question_b, response_id):
         self.check_auth_headers()
-        log.debug('Requesting banner filter for CMIX survey {}, question A: {}, question B: {}, response ID: {}'.format(survey_id, question_a, question_b, response_id))
+        log.debug(
+            'Requesting banner filter for CMIX survey {}, question A: {}, question B: {}, response ID: {}'.format(
+                survey_id,
+                question_a,
+                question_b,
+                response_id
+            )
+        )
         base_url = settings.CMIX_SERVICES['reporting']['BASE_URL']
         url = '{}/surveys/{}/response-counts'.format(base_url, survey_id)
         payload = {
@@ -202,21 +211,41 @@ class CmixAPI(object):
 
         archive_response = requests.post(archive_url, json=payload, headers=headers)
         if archive_response.status_code != 200:
-            raise CmixError('CMIX returned a non-200 response code: {} and error {}'.format(archive_response.status_code, archive_response.text))
+            raise CmixError(
+                'CMIX returned a non-200 response code: {} and error {}'.format(
+                    archive_response.status_code,
+                    archive_response.text
+                )
+            )
         if archive_response.json().get('error', None) is not None:
-            raise CmixError('CMIX returned an error with status code {}: {}'.format(archive_response.status_code, archive_response.text))
+            raise CmixError(
+                'CMIX returned an error with status code {}: {}'.format(
+                    archive_response.status_code,
+                    archive_response.text
+                )
+            )
         archive_json = archive_response.json()
 
         layout_url = '{}/surveys/{}/data-layouts/'.format(settings.CMIX_SERVICES['survey']["BASE_URL"], cmix_survey.cmix_id)
         layout_response = requests.get(layout_url, headers=self._authentication_headers)
         if layout_response.status_code != 200:
-            raise CmixError('CMIX returned a non-200 response code: {} and error {}'.format(layout_response.status_code, layout_response.text))
+            raise CmixError(
+                'CMIX returned a non-200 response code: {} and error {}'.format(
+                    layout_response.status_code,
+                    layout_response.text
+                )
+            )
         layout_id = None
         for layout in layout_response.json():
             if layout.get('name') == 'Default':
                 layout_id = layout.get('id')
         if layout_id is None:
-            raise CmixError('Layouts response did not contain a "Default" layout. Response Code: {}, Body {}'.format(layout_response.status_code, layout_response.content))
+            raise CmixError(
+                'Layouts response did not contain a "Default" layout. Response Code: {}, Body {}'.format(
+                    layout_response.status_code,
+                    layout_response.content
+                )
+            )
 
         archive_json['dataLayoutId'] = layout_id
         cda = CmixDataArchive.objects.create(
@@ -236,7 +265,9 @@ class CmixAPI(object):
         if layout_id is None:
             raise CmixError('Error while updating archie status: layout ID is None. Archive ID: {}'.format(archive.id))
         if archive_id is None:
-            raise CmixError('Error while updating archie status: CMIX archive ID is None. Pop Archive ID: {}'.format(archive.id))
+            raise CmixError(
+                'Error while updating archie status: CMIX archive ID is None. Pop Archive ID: {}'.format(archive.id)
+            )
         archive_url = '{}/surveys/{}/data-layouts/{}/archives/{}'.format(
             settings.CMIX_SERVICES['survey']["BASE_URL"],
             archive.cmix_survey.cmix_id,
@@ -271,7 +302,12 @@ class CmixAPI(object):
         url = '{}/projects/{}'.format(settings.CMIX_SERVICES['survey']['BASE_URL'], projectId)
         response = requests.patch(url, json=payload_json, headers=self._authentication_headers)
         if response.status_code > 299:
-            raise CmixError('CMIX returned an invalid response code during project update: HTTP {} and error {}'.format(response.status_code, response.text))
+            raise CmixError(
+                'CMIX returned an invalid response code during project update: HTTP {} and error {}'.format(
+                    response.status_code,
+                    response.text
+                )
+            )
         return response
 
     def create_survey(self, survey, wave_number=None):
