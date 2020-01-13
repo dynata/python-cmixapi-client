@@ -1,21 +1,12 @@
 # -*- coding: utf-8 -*-
 from __future__ import print_function
 from __future__ import unicode_literals
-import io
-import json
 import mock
-import xml.etree.ElementTree as ElementTree
-import xmlformatter
 
-from bs4 import BeautifulSoup
 from unittest import TestCase
-from freezegun import freeze_time
-
 from src.api import CmixAPI, default_cmix_api, CMIX_SERVICES
 from src.error import CmixError
-
 from popresearch.models import CmixDataArchive, Survey
-
 from .factories import UserFactory
 
 
