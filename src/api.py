@@ -330,11 +330,6 @@ class CmixAPI(object):
         strings_and_keys = generate_survey_xml_strings_and_secondary_keys(survey, wave_number)
         cmix_responses = []
         for secondary_key, xml_string in strings_and_keys:
-
-            # Give up after 10 tries
-            if survey.failed_creation_attempts >= 10:
-                continue
-
             url = '{}/surveys/data'.format(CMIX_SERVICES['file']['BASE_URL'])
             payload = {"data": xml_string}
             response = requests.post(url, payload, headers=self._authentication_headers)

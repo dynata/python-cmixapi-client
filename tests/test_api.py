@@ -14,8 +14,7 @@ from freezegun import freeze_time
 from src.api import CmixAPI, default_cmix_api, CMIX_SERVICES
 from src.error import CmixError
 
-from popresearch.models import SURVEY_TYPE_COMPARISON, SURVEY_TYPE_CREATIVE, \
-    CmixDataArchive, CmixSurvey, Survey
+from popresearch.models import CmixDataArchive, Survey
 
 from .factories import UserFactory
 
@@ -26,7 +25,7 @@ class TestCmixAPI(TestCase):
         self.cmix_api._authentication_headers = {'Authorization': 'Bearer test'}
         self.user = UserFactory.create_safe()
         self.survey = Survey.objects.create(user=self.user, name="Test Survey")
-        self.cmix_survey = CmixSurvey.objects.create(survey=self.survey, cmix_id=42)
+        self.survey_id = 1337
 
     def test_cmix_authentication_check(self):
         with self.assertRaises(CmixError):
@@ -73,7 +72,7 @@ class TestCmixAPI(TestCase):
                     'name': 'Default'
                 }]
                 mock_get.return_value = mock_response
-                self.cmix_api.create_export_archive(self.cmix_survey, 'XLSX_READABLE')
+                self.cmix_api.create_export_archive(self.survey_id, 'XLSX_READABLE')
         self.assertEqual(CmixDataArchive.objects.all().count(), 1)
 
     def test_create_export_archive_errors_handled(self):
@@ -95,7 +94,7 @@ class TestCmixAPI(TestCase):
                 }]
                 mock_get.return_value = mock_response
                 with self.assertRaises(CmixError):
-                    self.cmix_api.create_export_archive(self.cmix_survey, 'XLSX_READABLE')
+                    self.cmix_api.create_export_archive(self.survey_id, 'XLSX_READABLE')
 
             # Remove error from POST response.
             mock_post_response.json.return_value = {'response': 1}
@@ -110,7 +109,7 @@ class TestCmixAPI(TestCase):
                 }]
                 mock_get.return_value = mock_response
                 with self.assertRaises(CmixError):
-                    self.cmix_api.create_export_archive(self.cmix_survey, 'XLSX_READABLE')
+                    self.cmix_api.create_export_archive(self.survey_id, 'XLSX_READABLE')
 
                 # Check CmixError is raised if no default layout is returned.
                 mock_response.status_code = 200
@@ -119,7 +118,7 @@ class TestCmixAPI(TestCase):
                     'name': 'Not Default',
                 }]
                 with self.assertRaises(CmixError):
-                    self.cmix_api.create_export_archive(self.cmix_survey, 'XLSX_READABLE')
+                    self.cmix_api.create_export_archive(self.survey_id, 'XLSX_READABLE')
 
     def test_get_survey_status(self):
         self.cmix_api._authentication_headers = {'Authentication': 'Bearer test'}
@@ -130,10 +129,10 @@ class TestCmixAPI(TestCase):
             mock_get.json.return_value = {'status': 'LIVE'}
             mock_request.get.return_value = mock_get
 
-            self.assertEqual(self.cmix_api.get_survey_status(self.cmix_survey.id), 'live')
+            self.assertEqual(self.cmix_api.get_survey_status(self.survey_id), 'live')
 
             base_url = CMIX_SERVICES['survey']['BASE_URL']
-            surveys_url = '{}/surveys/{}'.format(base_url, self.cmix_survey.id)
+            surveys_url = '{}/surveys/{}'.format(base_url, self.survey_id)
             mock_request.get.assert_any_call(surveys_url, headers=self.cmix_api._authentication_headers)
 
     def test_get_survey_status_error_handled(self):
@@ -146,12 +145,12 @@ class TestCmixAPI(TestCase):
             mock_request.get.return_value = mock_get
 
             with self.assertRaises(CmixError):
-                self.cmix_api.get_survey_status(self.cmix_survey.id)
+                self.cmix_api.get_survey_status(self.survey_id)
 
     def test_get_survey_test_url(self):
         self.cmix_api._authentication_headers = {'Authentication': 'Bearer test'}
         correct_test_link = '{}/#/?cmixSvy={}&cmixTest={}'.format(
-            CMIX_SERVICES['test']['BASE_URL'], self.cmix_survey.id, 'test')
+            CMIX_SERVICES['test']['BASE_URL'], self.survey_id, 'test')
 
         with mock.patch('popresearch.cmix.api.requests') as mock_request:
             mock_get = mock.Mock()
@@ -159,7 +158,7 @@ class TestCmixAPI(TestCase):
             mock_get.json.return_value = {'testToken': 'test'}
             mock_request.get.return_value = mock_get
 
-            self.assertEqual(self.cmix_api.get_survey_test_url(self.cmix_survey.id), correct_test_link)
+            self.assertEqual(self.cmix_api.get_survey_test_url(self.survey_id), correct_test_link)
 
     def test_get_survey_test_url_no_token_handled(self):
         self.cmix_api._authentication_headers = {'Authentication': 'Bearer test'}
@@ -170,7 +169,7 @@ class TestCmixAPI(TestCase):
             mock_request.get.return_value = mock_get
 
             with self.assertRaises(CmixError):
-                self.cmix_api.get_survey_test_url(self.cmix_survey.id)
+                self.cmix_api.get_survey_test_url(self.survey_id)
 
     def test_get_survey_completes(self):
         with mock.patch('popresearch.cmix.api.requests') as mock_request:
@@ -186,7 +185,7 @@ class TestCmixAPI(TestCase):
             mock_request.get.side_effect = [
                 mock.Mock(json=lambda: mock_respondents),
             ]
-            self.assertEqual(self.cmix_api.get_survey_completes(self.cmix_survey.id), mock_respondents)
+            self.assertEqual(self.cmix_api.get_survey_completes(self.survey_id), mock_respondents)
 
     def test_get_surveys(self):
         with mock.patch('popresearch.cmix.api.requests') as mock_request:
@@ -229,9 +228,9 @@ class TestCmixAPI(TestCase):
             question_a = 123
             question_b = 124
             response_id = 125
-            self.cmix_api.fetch_banner_filter(self.cmix_survey.id, question_a, question_b, response_id)
+            self.cmix_api.fetch_banner_filter(self.survey_id, question_a, question_b, response_id)
             expected_url = '{}/surveys/{}/response-counts'.format(
-                CMIX_SERVICES['reporting']['BASE_URL'], self.cmix_survey.id)
+                CMIX_SERVICES['reporting']['BASE_URL'], self.survey_id)
             expected_payload = {
                 'testYN': 'LIVE',
                 'status': 'COMPLETE',
@@ -248,7 +247,7 @@ class TestCmixAPI(TestCase):
 
     def test_update_archive_status(self):
         cda = CmixDataArchive.objects.create(
-            cmix_survey_id=self.cmix_survey.id,
+            cmix_survey_id=self.survey_id,
             json={'dataLayoutId': 1, 'id': 2}
         )
         with mock.patch('popresearch.cmix.api.requests.get') as mock_request:
@@ -295,55 +294,3 @@ class TestCmixAPI(TestCase):
         extra_params_formatted = '&{}&{}'.format(extra_params[0], extra_params[1])
         expected = '{}{}'.format(url, extra_params_formatted)
         self.assertEqual(result, expected)
-
-    def test_comparisonpop_survey_creation(self):
-        self.maxDiff = None
-        with open('backend/apps/popresearch/tests/test_files/cmix/json/survey_comparison.json', "r") as json_data_file:
-            survey_json = json.load(json_data_file)
-            comparison_survey = Survey.objects.create(
-                user=self.user, name="ComparisonPop with Creative United States No Creative",
-                survey_type=SURVEY_TYPE_COMPARISON, json=survey_json)
-        with mock.patch('popresearch.cmix.api.requests') as mock_request:
-            mock_post = mock.Mock()
-            mock_post.status_code = 200
-            mock_post.json.return_value = {
-                'id': '100',
-                'response': '1',
-                'token_type': 'test',
-                'access_token': 'test',
-            }
-            mock_request.post.return_value = mock_post
-            self.cmix_api.create_survey(comparison_survey)
-            # (2 Test Cells + 1 Control Cell) * (2 Geographies) = 6
-
-            self.assertEqual(CmixSurvey.objects.filter(survey=comparison_survey).count(), 6)
-
-    def test_fail_survey_creation_quits_after_10_fails(self):
-        self.maxDiff = None
-        with open(
-                'backend/apps/popresearch/tests/test_files/cmix/json/survey_creativepop_no_ameritest.json',
-                "r") as json_data_file:
-            survey_json = json.load(json_data_file)
-            creativepop_survey = Survey.objects.create(
-                user=self.user, name="CreativePop to mock fail", survey_type=SURVEY_TYPE_CREATIVE, json=survey_json)
-        with mock.patch('popresearch.cmix.api.requests') as mock_request:
-            mock_post = mock.Mock()
-            mock_post.status_code = 500
-            mock_post.json.return_value = {
-                'id': '100',
-                'response': '1',
-                'token_type': 'test',
-                'access_token': 'test',
-            }
-            mock_request.post.return_value = mock_post
-            for i in range(1, 11):
-                try:
-                    self.cmix_api.create_survey(creativepop_survey)
-                except Exception:
-                    "Failure throws an exception we're ignoring here."
-                self.assertEqual(CmixSurvey.objects.filter(survey=creativepop_survey).count(), 0)
-                self.assertEqual(Survey.objects.filter(id=creativepop_survey.id)[0].failed_creation_attempts, i)
-
-            # After 10 tries it won't try try, and thus won't fail and won't throw an error
-            self.cmix_api.create_survey(creativepop_survey)
-            self.assertEqual(Survey.objects.filter(id=creativepop_survey.id)[0].failed_creation_attempts, 10)
