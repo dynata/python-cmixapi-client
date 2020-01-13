@@ -5,7 +5,6 @@ import logging
 import os
 
 from .error import CmixError
-# from .parsing import generate_survey_xml_strings_and_secondary_keys
 
 log = logging.getLogger(__name__)
 
