@@ -8,11 +8,10 @@ import xml.etree.ElementTree as ElementTree
 import xmlformatter
 from bs4 import BeautifulSoup
 
-from django.conf import settings
 from django.test import TestCase
 from freezegun import freeze_time
 
-from popresearch.cmix.api import CmixAPI, default_cmix_api
+from popresearch.cmix.api import CmixAPI, default_cmix_api, CMIX_SERVICES
 from popresearch.cmix.error import CmixError
 from popresearch.cmix.parsing.concepts import create_legacy_concept
 from popresearch.cmix.parsing.logic import create_page_logic
@@ -141,7 +140,7 @@ class TestCmixAPI(TestCase):
 
             self.assertEqual(self.cmix_api.get_survey_status(self.cmix_survey.id), 'live')
 
-            base_url = settings.CMIX_SERVICES['survey']['BASE_URL']
+            base_url = CMIX_SERVICES['survey']['BASE_URL']
             surveys_url = '{}/surveys/{}'.format(base_url, self.cmix_survey.id)
             mock_request.get.assert_any_call(surveys_url, headers=self.cmix_api._authentication_headers)
 
@@ -160,7 +159,7 @@ class TestCmixAPI(TestCase):
     def test_get_survey_test_url(self):
         self.cmix_api._authentication_headers = {'Authentication': 'Bearer test'}
         correct_test_link = '{}/#/?cmixSvy={}&cmixTest={}'.format(
-            settings.CMIX_SERVICES['test']['BASE_URL'], self.cmix_survey.id, 'test')
+            CMIX_SERVICES['test']['BASE_URL'], self.cmix_survey.id, 'test')
 
         with mock.patch('popresearch.cmix.api.requests') as mock_request:
             mock_get = mock.Mock()
@@ -213,11 +212,11 @@ class TestCmixAPI(TestCase):
                 mock.Mock(json=lambda: mock_surveys),
             ]
             self.cmix_api.get_surveys('LIVE')
-            expected_url = '{}/surveys?status={}'.format(settings.CMIX_SERVICES['survey']['BASE_URL'], 'LIVE')
+            expected_url = '{}/surveys?status={}'.format(CMIX_SERVICES['survey']['BASE_URL'], 'LIVE')
             mock_request.get.assert_any_call(expected_url, headers=mock.ANY)
 
             expected_url_with_params = '{}/surveys?status={}&hello=world&test=params'.format(
-                settings.CMIX_SERVICES['survey']['BASE_URL'], 'LIVE')
+                CMIX_SERVICES['survey']['BASE_URL'], 'LIVE')
             self.cmix_api.get_surveys('LIVE', extra_params=["hello=world", "test=params"])
             mock_request.get.assert_any_call(expected_url_with_params, headers=self.cmix_api._authentication_headers)
 
@@ -240,7 +239,7 @@ class TestCmixAPI(TestCase):
             response_id = 125
             self.cmix_api.fetch_banner_filter(self.cmix_survey.id, question_a, question_b, response_id)
             expected_url = '{}/surveys/{}/response-counts'.format(
-                settings.CMIX_SERVICES['reporting']['BASE_URL'], self.cmix_survey.id)
+                CMIX_SERVICES['reporting']['BASE_URL'], self.cmix_survey.id)
             expected_payload = {
                 'testYN': 'LIVE',
                 'status': 'COMPLETE',
