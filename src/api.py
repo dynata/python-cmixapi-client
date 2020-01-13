@@ -4,7 +4,7 @@ import requests
 import logging
 import os
 
-from popresearch.models import CmixDataArchive, CmixSurvey, CmixSurveyXml
+from popresearch.models import CmixSurvey
 
 from .error import CmixError
 from .parsing import generate_survey_xml_strings_and_secondary_keys
@@ -167,58 +167,58 @@ class CmixAPI(object):
 
         return url
 
-    def get_survey_definition(self, cmix_survey_id):
+    def get_survey_definition(self, survey_id):
         self.check_auth_headers()
-        definition_url = '{}/surveys/{}/definition'.format(CMIX_SERVICES['survey']['BASE_URL'], cmix_survey_id)
+        definition_url = '{}/surveys/{}/definition'.format(CMIX_SERVICES['survey']['BASE_URL'], survey_id)
         definition_response = requests.get(definition_url, headers=self._authentication_headers)
         return definition_response.json()
 
-    def get_survey_xml(self, cmix_survey_id):
+    def get_survey_xml(self, survey_id):
         self.check_auth_headers()
-        xml_url = '{}/surveys/{}'.format(CMIX_SERVICES['file']['BASE_URL'], cmix_survey_id)
+        xml_url = '{}/surveys/{}'.format(CMIX_SERVICES['file']['BASE_URL'], survey_id)
         xml_response = requests.get(xml_url, headers=self._authentication_headers)
         return xml_response.content
 
-    def get_survey_test_url(self, cmix_survey_id):
+    def get_survey_test_url(self, survey_id):
         self.check_auth_headers()
-        survey_url = '{}/surveys/{}'.format(CMIX_SERVICES['survey']['BASE_URL'], cmix_survey_id)
+        survey_url = '{}/surveys/{}'.format(CMIX_SERVICES['survey']['BASE_URL'], survey_id)
         survey_response = requests.get(survey_url, headers=self._authentication_headers)
         test_token = survey_response.json().get('testToken', None)
         if test_token is None:
-            raise CmixError('Survey endpoint for CMIX ID {} did not return a test token.'.format(cmix_survey_id))
+            raise CmixError('Survey endpoint for CMIX ID {} did not return a test token.'.format(survey_id))
         test_link = '{}/#/?cmixSvy={}&cmixTest={}'.format(
             CMIX_SERVICES['test']['BASE_URL'],
-            cmix_survey_id,
+            survey_id,
             test_token
         )
         return test_link
 
-    def get_survey_respondents(self, cmix_survey_id, respondent_type, live):
+    def get_survey_respondents(self, survey_id, respondent_type, live):
         self.check_auth_headers()
         respondents_url = '{}/surveys/{}/respondents?respondentType={}&respondentStatus={}'.format(
             CMIX_SERVICES['reporting']['BASE_URL'],
-            cmix_survey_id,
+            survey_id,
             "LIVE" if live else "TEST",
             respondent_type,
         )
         respondents_response = requests.get(respondents_url, headers=self._authentication_headers)
         return respondents_response.json()
 
-    def get_survey_status(self, cmix_survey_id):
+    def get_survey_status(self, survey_id):
         self.check_auth_headers()
-        status_url = '{}/surveys/{}'.format(CMIX_SERVICES['survey']['BASE_URL'], cmix_survey_id)
+        status_url = '{}/surveys/{}'.format(CMIX_SERVICES['survey']['BASE_URL'], survey_id)
         status_response = requests.get(status_url, headers=self._authentication_headers)
         status = status_response.json().get('status', None)
         if status is None:
             raise CmixError('Get Survey Status returned without a status. Response: {}'.format(status_response.json()))
         return status.lower()
 
-    def get_survey_completes(self, cmix_survey_id):
-        return self.get_survey_respondents(cmix_survey_id, "COMPLETE", True)
+    def get_survey_completes(self, survey_id):
+        return self.get_survey_respondents(survey_id, "COMPLETE", True)
 
-    def create_export_archive(self, cmix_survey, export_type):
+    def create_export_archive(self, survey_id, export_type):
         self.check_auth_headers()
-        archive_url = '{}/surveys/{}/archives'.format(CMIX_SERVICES['survey']['BASE_URL'], cmix_survey.cmix_id)
+        archive_url = '{}/surveys/{}/archives'.format(CMIX_SERVICES['survey']['BASE_URL'], survey_id)
         headers = self._authentication_headers.copy()
         headers['Content-Type'] = "application/json"
         payload = {
@@ -246,7 +246,7 @@ class CmixAPI(object):
             )
         archive_json = archive_response.json()
 
-        layout_url = '{}/surveys/{}/data-layouts/'.format(CMIX_SERVICES['survey']["BASE_URL"], cmix_survey.cmix_id)
+        layout_url = '{}/surveys/{}/data-layouts/'.format(CMIX_SERVICES['survey']["BASE_URL"], survey_id)
         layout_response = requests.get(layout_url, headers=self._authentication_headers)
         if layout_response.status_code != 200:
             raise CmixError(
@@ -268,25 +268,17 @@ class CmixAPI(object):
             )
 
         archive_json['dataLayoutId'] = layout_id
-        cda = CmixDataArchive.objects.create(
-            cmix_survey=cmix_survey,
-            status=CmixDataArchive.UNPROCESSED,
-            json=archive_json,
-            download_url="",
-            deleted=False,
-            file_type=export_type,
-        )
-        return cda
+        return archive_json
 
     def update_archive_status(self, archive):
         self.check_auth_headers()
         layout_id = archive.json.get('dataLayoutId', None)
         archive_id = archive.json.get('id', None)
         if layout_id is None:
-            raise CmixError('Error while updating archie status: layout ID is None. Archive ID: {}'.format(archive.id))
+            raise CmixError('Error while updating archie status: layout ID is None. Archive ID: {}'.format(archive_id))
         if archive_id is None:
             raise CmixError(
-                'Error while updating archie status: CMIX archive ID is None. Pop Archive ID: {}'.format(archive.id)
+                'Error while updating archie status: CMIX archive ID is None. Pop Archive ID: {}'.format(archive_id)
             )
         archive_url = '{}/surveys/{}/data-layouts/{}/archives/{}'.format(
             CMIX_SERVICES['survey']["BASE_URL"],
@@ -301,7 +293,6 @@ class CmixAPI(object):
             archive_response['id'] = archive_id
             archive.json = archive_response
         else:
-            archive.status = CmixDataArchive.PROCESSED
             archive.download_url = archive_response.get('archiveUrl')
         archive.save()
         return archive
@@ -376,12 +367,6 @@ class CmixAPI(object):
                 cmix_status='design',
                 results_requested=False,
                 secondary_key=secondary_key,
-            )
-            CmixSurveyXml.objects.create(
-                cmix_id=cmix_id,
-                cmix_project_id=cmix_project_id,
-                xml=xml_string,
-                when_recorded='sent',
             )
 
             self.update_project(response_json.get('projectId'), status=self.SURVEY_STATUS_DESIGN)
