@@ -10,33 +10,24 @@ log = logging.getLogger(__name__)
 
 CMIX_SERVICES = {
     'auth': {
-        'BASE_URL': os.getenv('CMIX_URL_AUTH'),
-    },
-    'launchpad': {
-        'BASE_URL': os.getenv('CMIX_URL_LAUNCHPAD'),
-    },
-    'reporting': {
-        'BASE_URL': os.getenv('CMIX_URL_REPORTING'),
-    },
-    'survey': {
-        'BASE_URL': os.getenv('CMIX_URL_SURVEY'),
+        'BASE_URL': 'https://auth.cmix.com',
     },
     'file': {
-        'BASE_URL': os.getenv('CMIX_URL_FILE'),
+        'BASE_URL': 'https://file-processing.cmix.com',
+    },
+    'launchpad': {
+        'BASE_URL': 'https://launchpad.cmix.com',
+    },
+    'reporting': {
+        'BASE_URL': 'https://reporting-api.cmix.com',
+    },
+    'survey': {
+        'BASE_URL': 'https://survey-api.cmix.com',
     },
     'test': {
-        'BASE_URL': os.getenv('CMIX_URL_TEST'),
+        'BASE_URL': 'https://test.cmix.com',
     },
 }
-
-
-def default_cmix_api():
-    return CmixAPI(
-        username=os.getenv("CMIX_USERNAME"),
-        password=os.getenv("CMIX_PASSWORD"),
-        client_id=os.getenv("CMIX_V2_CLIENT_ID"),
-        client_secret=os.getenv("CMIX_V2_CLIENT_SECRET")
-    )
 
 
 # - it seems like this class would work better as a singleton - and
@@ -267,10 +258,8 @@ class CmixAPI(object):
         archive_json['dataLayoutId'] = layout_id
         return archive_json
 
-    def update_archive_status(self, archive):
+    def get_archive_status(self, survey_id, archive_id, layout_id):
         self.check_auth_headers()
-        layout_id = archive.json.get('dataLayoutId', None)
-        archive_id = archive.json.get('id', None)
         if layout_id is None:
             raise CmixError('Error while updating archie status: layout ID is None. Archive ID: {}'.format(archive_id))
         if archive_id is None:
@@ -279,22 +268,21 @@ class CmixAPI(object):
             )
         archive_url = '{}/surveys/{}/data-layouts/{}/archives/{}'.format(
             CMIX_SERVICES['survey']["BASE_URL"],
-            archive.cmix_survey.cmix_id,
+            survey_id,
             layout_id,
             archive_id  # The archive ID on CMIX.
         )
-        archive_response = requests.get(archive_url, headers=self._authentication_headers).json()
-        if archive_response.get('status') != "COMPLETE":
-            # Save the updated json, but make sure to preserve the layout and archive IDs in case there's a problem.
-            archive_response['dataLayoutId'] = layout_id
-            archive_response['id'] = archive_id
-            archive.json = archive_response
-        else:
-            archive.download_url = archive_response.get('archiveUrl')
-        archive.save()
-        return archive
+        archive_response = requests.get(archive_url, headers=self._authentication_headers)
+        if archive_response.status_code > 299:
+            raise CmixError(
+                'CMIX returned an invalid response code getting archive status: HTTP {} and error {}'.format(
+                    archive_response.status_code,
+                    archive_response.text
+                )
+            )
+        return archive_response.json()
 
-    def update_project(self, projectId, status=None):
+    def update_project(self, project_id, status=None):
         '''
             NOTE: This endpoint accepts a project ID, not a survey ID.
         '''
@@ -305,9 +293,9 @@ class CmixAPI(object):
             payload_json['status'] = status
 
         if payload_json == {}:
-            raise CmixError("No update data was provided for CMIX Project {}".format(projectId))
+            raise CmixError("No update data was provided for CMIX Project {}".format(project_id))
 
-        url = '{}/projects/{}'.format(CMIX_SERVICES['survey']['BASE_URL'], projectId)
+        url = '{}/projects/{}'.format(CMIX_SERVICES['survey']['BASE_URL'], project_id)
         response = requests.patch(url, json=payload_json, headers=self._authentication_headers)
         if response.status_code > 299:
             raise CmixError(
@@ -318,39 +306,24 @@ class CmixAPI(object):
             )
         return response
 
-
-#    def create_survey(self, survey, wave_number=None):
+    def create_survey(self, xml_string):
         '''
             This function will create a survey on CMIX and set the survey's status to 'LIVE'.
         '''
-        """
         self.check_auth_headers()
 
-        log.debug('Sending Survey to new CMIX API: {}'.format(survey.name))
-        strings_and_keys = generate_survey_xml_strings_and_secondary_keys(survey, wave_number)
-        cmix_responses = []
-        for secondary_key, xml_string in strings_and_keys:
-            url = '{}/surveys/data'.format(CMIX_SERVICES['file']['BASE_URL'])
-            payload = {"data": xml_string}
-            response = requests.post(url, payload, headers=self._authentication_headers)
-            cmix_responses.append(response)
-            if response.status_code > 299:
-                survey.failed_creation_attempts = survey.failed_creation_attempts + 1
-                survey.save()
-                raise CmixError(
-                    'Error while creating survey. CMIX responded with status' +
-                    ' code {} and text: {} when sent this XML: {}'.format(
-                        response.status_code,
-                        response.text,
-                        xml_string
-                    )
+        url = '{}/surveys/data'.format(CMIX_SERVICES['file']['BASE_URL'])
+        payload = {"data": xml_string}
+        response = requests.post(url, payload, headers=self._authentication_headers)
+        if response.status_code > 299:
+            raise CmixError(
+                'Error while creating survey. CMIX responded with status' +
+                ' code {} and text: {} when sent this XML: {}'.format(
+                    response.status_code,
+                    response.text,
+                    xml_string
                 )
-            response_json = response.json()
-            cmix_id = response_json.get('id')
-            cmix_project_id = response_json.get('projectId')
-            log.debug('Successfully created CMIX Survey {}.'.format(cmix_id))
-
-            self.update_project(response_json.get('projectId'), status=self.SURVEY_STATUS_DESIGN)
-
-        return cmix_responses
-        """
+            )
+        response_json = response.json()
+        self.update_project(response_json.get('projectId'), status=self.SURVEY_STATUS_DESIGN)
+        return response_json
