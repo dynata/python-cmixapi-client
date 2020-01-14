@@ -10,21 +10,27 @@ log = logging.getLogger(__name__)
 CMIX_SERVICES = {
     'auth': {
         'BASE_URL': 'https://auth.cmix.com',
+        'TEST_URL': 'https://kaleidoscope-auth.cmix.com',
     },
     'file': {
         'BASE_URL': 'https://file-processing.cmix.com',
+        'TEST_URL': 'https://kaleidoscope-file-processing.cmix.com',
     },
     'launchpad': {
         'BASE_URL': 'https://launchpad.cmix.com',
+        'TEST_URL': 'https://kaleidoscope-launchpad.cmix.com',
     },
     'reporting': {
         'BASE_URL': 'https://reporting-api.cmix.com',
+        'TEST_URL': 'https://kaleidoscope-reporting-api.cmix.com',
     },
     'survey': {
         'BASE_URL': 'https://survey-api.cmix.com',
+        'TEST_URL': 'https://kaleidoscope-survey-api.cmix.com',
     },
     'test': {
         'BASE_URL': 'https://test.cmix.com',
+        'TEST_URL': 'https://kaleidoscope-test.cmix.com',
     },
 }
 
@@ -46,13 +52,16 @@ class CmixAPI(object):
     # valid extra survey url params
     SURVEY_PARAMS_STATUS_AFTER = 'statusAfter'
 
-    def __init__(self, username=None, password=None, client_id=None, client_secret=None, *args, **kwargs):
+    def __init__(self, username=None, password=None, client_id=None, client_secret=None, test=False, *args, **kwargs):
         if None in [username, password, client_id, client_secret]:
             raise CmixError("All authentication data is required.")
         self.username = username
         self.password = password
         self.client_id = client_id
         self.client_secret = client_secret
+        self.url_type = 'BASE_URL'
+        if test is True:
+            self.url_type = 'TEST_URL'
 
     def check_auth_headers(self):
         if self._authentication_headers is None:
@@ -67,7 +76,7 @@ class CmixAPI(object):
             "password": self.password
         }
 
-        auth_url = '{}/access-token'.format(CMIX_SERVICES['auth']['BASE_URL'])
+        auth_url = '{}/access-token'.format(CMIX_SERVICES['auth'][self.url_type])
         try:
             auth_response = requests.post(auth_url, json=auth_payload, headers={"Content-Type": "application/json"})
             if auth_response.status_code != 200:
@@ -95,7 +104,7 @@ class CmixAPI(object):
                 response_id
             )
         )
-        base_url = CMIX_SERVICES['reporting']['BASE_URL']
+        base_url = CMIX_SERVICES['reporting'][self.url_type]
         url = '{}/surveys/{}/response-counts'.format(base_url, survey_id)
         payload = {
             'testYN': 'LIVE',
@@ -125,7 +134,7 @@ class CmixAPI(object):
         '''
         self.check_auth_headers()
         log.debug('Requesting raw results for CMIX survey {}'.format(survey_id))
-        base_url = CMIX_SERVICES['reporting']['BASE_URL']
+        base_url = CMIX_SERVICES['reporting'][self.url_type]
         url = '{}/surveys/{}/response-counts'.format(base_url, survey_id)
         response = requests.post(url, headers=self._authentication_headers, json=payload)
         return response.json()
@@ -140,7 +149,7 @@ class CmixAPI(object):
             get_surveys('status', extra_params=params)
         '''
         self.check_auth_headers()
-        base_url = CMIX_SERVICES['survey']['BASE_URL']
+        base_url = CMIX_SERVICES['survey'][self.url_type]
         surveys_url = '{}/surveys?status={}'.format(base_url, status)
         extra_params = kwargs.get('extra_params')
         if extra_params is not None:
@@ -156,25 +165,25 @@ class CmixAPI(object):
 
     def get_survey_definition(self, survey_id):
         self.check_auth_headers()
-        definition_url = '{}/surveys/{}/definition'.format(CMIX_SERVICES['survey']['BASE_URL'], survey_id)
+        definition_url = '{}/surveys/{}/definition'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
         definition_response = requests.get(definition_url, headers=self._authentication_headers)
         return definition_response.json()
 
     def get_survey_xml(self, survey_id):
         self.check_auth_headers()
-        xml_url = '{}/surveys/{}'.format(CMIX_SERVICES['file']['BASE_URL'], survey_id)
+        xml_url = '{}/surveys/{}'.format(CMIX_SERVICES['file'][self.url_type], survey_id)
         xml_response = requests.get(xml_url, headers=self._authentication_headers)
         return xml_response.content
 
     def get_survey_test_url(self, survey_id):
         self.check_auth_headers()
-        survey_url = '{}/surveys/{}'.format(CMIX_SERVICES['survey']['BASE_URL'], survey_id)
+        survey_url = '{}/surveys/{}'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
         survey_response = requests.get(survey_url, headers=self._authentication_headers)
         test_token = survey_response.json().get('testToken', None)
         if test_token is None:
             raise CmixError('Survey endpoint for CMIX ID {} did not return a test token.'.format(survey_id))
         test_link = '{}/#/?cmixSvy={}&cmixTest={}'.format(
-            CMIX_SERVICES['test']['BASE_URL'],
+            CMIX_SERVICES['test'][self.url_type],
             survey_id,
             test_token
         )
@@ -183,7 +192,7 @@ class CmixAPI(object):
     def get_survey_respondents(self, survey_id, respondent_type, live):
         self.check_auth_headers()
         respondents_url = '{}/surveys/{}/respondents?respondentType={}&respondentStatus={}'.format(
-            CMIX_SERVICES['reporting']['BASE_URL'],
+            CMIX_SERVICES['reporting'][self.url_type],
             survey_id,
             "LIVE" if live else "TEST",
             respondent_type,
@@ -193,7 +202,7 @@ class CmixAPI(object):
 
     def get_survey_status(self, survey_id):
         self.check_auth_headers()
-        status_url = '{}/surveys/{}'.format(CMIX_SERVICES['survey']['BASE_URL'], survey_id)
+        status_url = '{}/surveys/{}'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
         status_response = requests.get(status_url, headers=self._authentication_headers)
         status = status_response.json().get('status', None)
         if status is None:
@@ -205,7 +214,7 @@ class CmixAPI(object):
 
     def create_export_archive(self, survey_id, export_type):
         self.check_auth_headers()
-        archive_url = '{}/surveys/{}/archives'.format(CMIX_SERVICES['survey']['BASE_URL'], survey_id)
+        archive_url = '{}/surveys/{}/archives'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
         headers = self._authentication_headers.copy()
         headers['Content-Type'] = "application/json"
         payload = {
@@ -294,7 +303,7 @@ class CmixAPI(object):
         if payload_json == {}:
             raise CmixError("No update data was provided for CMIX Project {}".format(project_id))
 
-        url = '{}/projects/{}'.format(CMIX_SERVICES['survey']['BASE_URL'], project_id)
+        url = '{}/projects/{}'.format(CMIX_SERVICES['survey'][self.url_type], project_id)
         response = requests.patch(url, json=payload_json, headers=self._authentication_headers)
         if response.status_code > 299:
             raise CmixError(
@@ -311,7 +320,7 @@ class CmixAPI(object):
         '''
         self.check_auth_headers()
 
-        url = '{}/surveys/data'.format(CMIX_SERVICES['file']['BASE_URL'])
+        url = '{}/surveys/data'.format(CMIX_SERVICES['file'][self.url_type])
         payload = {"data": xml_string}
         response = requests.post(url, payload, headers=self._authentication_headers)
         if response.status_code > 299:

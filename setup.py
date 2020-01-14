@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="python-cmixapi-client",
-    version="0.1.0",
+    version="0.1.2",
     author="Bradley Wogsland",
     author_email="bradley@wogsland.org",
     description="A Python client for the Cmix API.",

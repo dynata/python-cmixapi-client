@@ -48,8 +48,10 @@ Please use the [GitHub Issues](https://github.com/dynata/python-cmixapi-client/i
 
 ### Releasing
 
-The release can be done completely on the command line:
+The release can be done completely on the command line. First make sure the version number has been updated in `setup.py`. Then
 
+    git commit -am "feature(s) for this release"
+    git push origin dev
     git tag -a 0.1.0 -m "Initial release with minimal functionality used by PopResearch"
     git push origin 0.1.0
     python3 -m pip install --user --upgrade setuptools wheel
@@ -57,6 +59,6 @@ The release can be done completely on the command line:
     python3 -m pip install --user --upgrade twine
     python3 -m twine upload dist/*
 
-but it's also a good idea to attach the `.whl` and `.tar.gz` files to the release in GitHub.
+and it's also a good idea to attach the `.whl` and `.tar.gz` files to the release in GitHub.
 
 Thats it.

@@ -8,9 +8,11 @@ A Python client library for the [Dynata Cmix API](https://wiki2.criticalmix.net/
 
 ## Setup
 
-    Something here
+    pip install python-cmixapi-client
 
 ## Example Usage
+
+    from CmixAPIClient.api import CmixAPI
 
     cmix = CmixAPI(
         username="test_username",
