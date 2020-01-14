@@ -1,5 +1,7 @@
 # python-cmixapi-client
 
+[![PyPI version](https://badge.fury.io/py/python-cmixapi-client.svg)](https://pypi.org/project/python-cmixapi-client/)
+
 <a href="https://github.com/dynata/python-cmixapi-client/actions"><img alt="GitHub Actions status" src="https://github.com/dynata/python-cmixapi-client/workflows/python-tests/badge.svg"></a>
 
 A Python client library for the [Dynata Cmix API](https://wiki2.criticalmix.net/display/CA/Getting+started).
@@ -38,7 +40,7 @@ A Python client library for the [Dynata Cmix API](https://wiki2.criticalmix.net/
 
 ## Contributing
 
-Information on [contributing](CONTRIBUTING.md).
+Information on [contributing](https://github.com/dynata/python-cmixapi-client/blob/dev/CONTRIBUTING.md) to this python library.
 
 ## Testing
 

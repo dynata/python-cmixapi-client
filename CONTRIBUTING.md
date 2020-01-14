@@ -46,4 +46,17 @@ to run the tests for this project.
 
 Please use the [GitHub Issues](https://github.com/dynata/python-cmixapi-client/issues/new) to file an issue.
 
+### Releasing
+
+The release can be done completely on the command line:
+
+    git tag -a 0.1.0 -m "Initial release with minimal functionality used by PopResearch"
+    git push origin 0.1.0
+    python3 -m pip install --user --upgrade setuptools wheel
+    python3 setup.py sdist bdist_wheel
+    python3 -m pip install --user --upgrade twine
+    python3 -m twine upload dist/*
+
+but it's also a good idea to attach the `.whl` and `.tar.gz` files to the release in GitHub.
+
 Thats it.

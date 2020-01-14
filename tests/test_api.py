@@ -4,8 +4,8 @@ from __future__ import unicode_literals
 import mock
 
 from unittest import TestCase
-from src.api import CmixAPI, CMIX_SERVICES
-from src.error import CmixError
+from CmixAPIClient.api import CmixAPI, CMIX_SERVICES
+from CmixAPIClient.error import CmixError
 
 
 def default_cmix_api():
@@ -72,7 +72,7 @@ class TestCmixAPI(TestCase):
         self.assertEqual(response['response'], 1)
 
     def test_create_export_archive_errors_handled(self):
-        with mock.patch('src.api.requests.post') as mock_post:
+        with mock.patch('CmixAPIClient.api.requests.post') as mock_post:
             mock_post_response = mock.Mock()
             mock_post_response.status_code = 200
             mock_post_response.json.return_value = {
@@ -80,7 +80,7 @@ class TestCmixAPI(TestCase):
                 'error': 'Oops!',
             }
             mock_post.return_value = mock_post_response
-            with mock.patch('src.api.requests.get') as mock_get:
+            with mock.patch('CmixAPIClient.api.requests.get') as mock_get:
                 # Check CmixError is raised if POST response JSON includes an error.
                 mock_response = mock.Mock()
                 mock_response.status_code = 200
@@ -95,7 +95,7 @@ class TestCmixAPI(TestCase):
             # Remove error from POST response.
             mock_post_response.json.return_value = {'response': 1}
 
-            with mock.patch('src.api.requests.get') as mock_get:
+            with mock.patch('CmixAPIClient.api.requests.get') as mock_get:
                 # Check CmixError is raised on GET 500 response. (layout response)
                 mock_response = mock.Mock()
                 mock_response.status_code = 500
@@ -119,7 +119,7 @@ class TestCmixAPI(TestCase):
     def test_get_survey_status(self):
         self.cmix_api._authentication_headers = {'Authentication': 'Bearer test'}
 
-        with mock.patch('src.api.requests') as mock_request:
+        with mock.patch('CmixAPIClient.api.requests') as mock_request:
             mock_get = mock.Mock()
             mock_get.status_code = 200
             mock_get.json.return_value = {'status': 'LIVE'}
@@ -134,7 +134,7 @@ class TestCmixAPI(TestCase):
     def test_get_survey_status_error_handled(self):
         self.cmix_api._authentication_headers = {'Authentication': 'Bearer test'}
 
-        with mock.patch('src.api.requests') as mock_request:
+        with mock.patch('CmixAPIClient.api.requests') as mock_request:
             mock_get = mock.Mock()
             mock_get.status_code = 200
             mock_get.json.return_value = {}
@@ -148,7 +148,7 @@ class TestCmixAPI(TestCase):
         correct_test_link = '{}/#/?cmixSvy={}&cmixTest={}'.format(
             CMIX_SERVICES['test']['BASE_URL'], self.survey_id, 'test')
 
-        with mock.patch('src.api.requests') as mock_request:
+        with mock.patch('CmixAPIClient.api.requests') as mock_request:
             mock_get = mock.Mock()
             mock_get.status_code = 200
             mock_get.json.return_value = {'testToken': 'test'}
@@ -158,7 +158,7 @@ class TestCmixAPI(TestCase):
 
     def test_get_survey_test_url_no_token_handled(self):
         self.cmix_api._authentication_headers = {'Authentication': 'Bearer test'}
-        with mock.patch('src.api.requests') as mock_request:
+        with mock.patch('CmixAPIClient.api.requests') as mock_request:
             mock_get = mock.Mock()
             mock_get.status_code = 200
             mock_get.json.return_value = {}
@@ -168,7 +168,7 @@ class TestCmixAPI(TestCase):
                 self.cmix_api.get_survey_test_url(self.survey_id)
 
     def test_get_survey_completes(self):
-        with mock.patch('src.api.requests') as mock_request:
+        with mock.patch('CmixAPIClient.api.requests') as mock_request:
             mock_post = mock.Mock()
             mock_post.status_code = 200
             mock_post.json.return_value = {
@@ -184,7 +184,7 @@ class TestCmixAPI(TestCase):
             self.assertEqual(self.cmix_api.get_survey_completes(self.survey_id), mock_respondents)
 
     def test_get_surveys(self):
-        with mock.patch('src.api.requests') as mock_request:
+        with mock.patch('CmixAPIClient.api.requests') as mock_request:
             mock_post = mock.Mock()
             mock_post.status_code = 200
             mock_post.json.return_value = {
@@ -208,7 +208,7 @@ class TestCmixAPI(TestCase):
             mock_request.get.assert_any_call(expected_url_with_params, headers=self.cmix_api._authentication_headers)
 
     def test_fetch_banner_filter(self):
-        with mock.patch('src.api.requests') as mock_request:
+        with mock.patch('CmixAPIClient.api.requests') as mock_request:
             mock_post = mock.Mock()
             mock_post.status_code = 200
             mock_post.json.return_value = {
@@ -245,7 +245,7 @@ class TestCmixAPI(TestCase):
         survey_id = 1337
         archive_id = 12
         layout_id = 1
-        with mock.patch('src.api.requests.get') as mock_request:
+        with mock.patch('CmixAPIClient.api.requests.get') as mock_request:
             mock_response = mock.Mock()
             mock_response.status_code = 200
             mock_response.json.return_value = {
