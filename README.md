@@ -1,6 +1,6 @@
 # python-cmixapi-client
 
-<a href="https://github.com/dynata/python-cmixapi-client"><img alt="GitHub Actions status" src="https://github.com/dynata/python-cmixapi-client/workflows/python-tests/badge.svg"></a>
+<a href="https://github.com/dynata/python-cmixapi-client/actions"><img alt="GitHub Actions status" src="https://github.com/dynata/python-cmixapi-client/workflows/python-tests/badge.svg"></a>
 
 A Python client library for the [Dynata Cmix API](https://wiki2.criticalmix.net/display/CA/Getting+started).
 
