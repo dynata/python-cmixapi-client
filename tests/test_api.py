@@ -68,8 +68,8 @@ class TestCmixAPI(TestCase):
                     'name': 'Default'
                 }]
                 mock_get.return_value = mock_response
-                self.cmix_api.create_export_archive(self.survey_id, 'XLSX_READABLE')
-        self.assertEqual(1, 1)
+                response = self.cmix_api.create_export_archive(self.survey_id, 'XLSX_READABLE')
+        self.assertEqual(response['response'], 1)
 
     def test_create_export_archive_errors_handled(self):
         with mock.patch('src.api.requests.post') as mock_post:
@@ -255,7 +255,8 @@ class TestCmixAPI(TestCase):
 
             mock_request.return_value = mock_response
             response = self.cmix_api.get_archive_status(survey_id, archive_id, layout_id)
-        self.assertEqual(1, 1)
+        self.assertEqual(response['status'], 'COMPLETE')
+        self.assertEqual(response['archiveUrl'], 'http://popresearch.com/')
 
     def test_error_if_not_authenticated(self):
         self.cmix_api._authentication_headers = None

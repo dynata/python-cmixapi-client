@@ -2,7 +2,6 @@
 from __future__ import unicode_literals
 import requests
 import logging
-import os
 
 from .error import CmixError
 
