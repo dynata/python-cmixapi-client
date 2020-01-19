@@ -143,6 +143,32 @@ class TestCmixAPI(TestCase):
             with self.assertRaises(CmixError):
                 self.cmix_api.get_survey_status(self.survey_id)
 
+    def test_get_survey_sections(self):
+        self.cmix_api._authentication_headers = {'Authentication': 'Bearer test'}
+
+        # success case
+        with mock.patch('CmixAPIClient.api.requests') as mock_request:
+            mock_get = mock.Mock()
+            mock_get.status_code = 200
+            mock_get.json.return_value = {}
+            mock_request.get.return_value = mock_get
+
+            self.cmix_api.get_survey_sections(self.survey_id)
+
+            base_url = CMIX_SERVICES['survey']['BASE_URL']
+            surveys_url = '{}/surveys/{}/sections'.format(base_url, self.survey_id)
+            mock_request.get.assert_any_call(surveys_url, headers=self.cmix_api._authentication_headers)
+
+        # error case (survey not found)
+        with mock.patch('CmixAPIClient.api.requests') as mock_request:
+            mock_get = mock.Mock()
+            mock_get.status_code = 404
+            mock_get.json.return_value = {}
+            mock_request.get.return_value = mock_get
+
+            with self.assertRaises(CmixError):
+                self.cmix_api.get_survey_sections(self.survey_id)
+
     def test_get_survey_test_url(self):
         self.cmix_api._authentication_headers = {'Authentication': 'Bearer test'}
         correct_test_link = '{}/#/?cmixSvy={}&cmixTest={}'.format(
