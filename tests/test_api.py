@@ -183,6 +183,32 @@ class TestCmixAPI(TestCase):
             ]
             self.assertEqual(self.cmix_api.get_survey_completes(self.survey_id), mock_respondents)
 
+    def test_get_survey_termination_codes(self):
+        self.cmix_api._authentication_headers = {'Authentication': 'Bearer test'}
+
+        # success case
+        with mock.patch('CmixAPIClient.api.requests') as mock_request:
+            mock_get = mock.Mock()
+            mock_get.status_code = 200
+            mock_get.json.return_value = {}
+            mock_request.get.return_value = mock_get
+
+            self.cmix_api.get_survey_termination_codes(self.survey_id)
+
+            base_url = CMIX_SERVICES['survey']['BASE_URL']
+            surveys_url = '{}/surveys/{}/termination-codes'.format(base_url, self.survey_id)
+            mock_request.get.assert_any_call(surveys_url, headers=self.cmix_api._authentication_headers)
+
+        # error case (survey not found)
+        with mock.patch('CmixAPIClient.api.requests') as mock_request:
+            mock_get = mock.Mock()
+            mock_get.status_code = 404
+            mock_get.json.return_value = {}
+            mock_request.get.return_value = mock_get
+
+            with self.assertRaises(CmixError):
+                self.cmix_api.get_survey_termination_codes(self.survey_id)
+
     def test_get_surveys(self):
         with mock.patch('CmixAPIClient.api.requests') as mock_request:
             mock_post = mock.Mock()
