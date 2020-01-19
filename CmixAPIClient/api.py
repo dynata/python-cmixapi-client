@@ -200,6 +200,19 @@ class CmixAPI(object):
         respondents_response = requests.get(respondents_url, headers=self._authentication_headers)
         return respondents_response.json()
 
+    def get_survey_locales(self, survey_id):
+        self.check_auth_headers()
+        locales_url = '{}/surveys/{}/locales'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
+        locales_response = requests.get(locales_url, headers=self._authentication_headers)
+        if locales_response.status_code != 200:
+            raise CmixError(
+                'CMIX returned a non-200 response code while getting locales: {} and error {}'.format(
+                    locales_response.status_code,
+                    locales_response.text
+                )
+            )
+        return locales_response.json()
+
     def get_survey_status(self, survey_id):
         self.check_auth_headers()
         status_url = '{}/surveys/{}'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
