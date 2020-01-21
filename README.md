@@ -29,6 +29,7 @@ A Python client library for the [Dynata Cmix API](https://wiki2.criticalmix.net/
     fetch_banner_filter(survey_id, question_a, question_b, response_id)
     fetch_raw_results(survey_id, payload)
     get_surveys(status, *args, **kwargs)
+    get_survey_data_layouts(survey_id)
     get_survey_definition(survey_id)
     get_survey_xml(survey_id)
     get_survey_simulations(survey_id)
