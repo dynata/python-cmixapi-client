@@ -163,6 +163,19 @@ class CmixAPI(object):
 
         return url
 
+    def get_survey_data_layouts(self, survey_id):
+        self.check_auth_headers()
+        data_layouts_url = '{}/surveys/{}/data-layouts'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
+        data_layouts_response = requests.get(data_layouts_url, headers=self._authentication_headers)
+        if data_layouts_response.status_code != 200:
+            raise CmixError(
+                'CMIX returned a non-200 response code while getting data_layouts: {} and error {}'.format(
+                    data_layouts_response.status_code,
+                    data_layouts_response.text
+                )
+            )
+        return data_layouts_response.json()
+
     def get_survey_definition(self, survey_id):
         self.check_auth_headers()
         definition_url = '{}/surveys/{}/definition'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
@@ -208,6 +221,19 @@ class CmixAPI(object):
         if status is None:
             raise CmixError('Get Survey Status returned without a status. Response: {}'.format(status_response.json()))
         return status.lower()
+
+    def get_survey_sources(self, survey_id):
+        self.check_auth_headers()
+        sources_url = '{}/surveys/{}/sources'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
+        sources_response = requests.get(sources_url, headers=self._authentication_headers)
+        if sources_response.status_code != 200:
+            raise CmixError(
+                'CMIX returned a non-200 response code while getting sources: {} and error {}'.format(
+                    sources_response.status_code,
+                    sources_response.text
+                )
+            )
+        return sources_response.json()
 
     def get_survey_completes(self, survey_id):
         return self.get_survey_respondents(survey_id, "COMPLETE", True)
@@ -255,25 +281,14 @@ class CmixAPI(object):
             )
         archive_json = archive_response.json()
 
-        layout_url = '{}/surveys/{}/data-layouts/'.format(CMIX_SERVICES['survey']["BASE_URL"], survey_id)
-        layout_response = requests.get(layout_url, headers=self._authentication_headers)
-        if layout_response.status_code != 200:
-            raise CmixError(
-                'CMIX returned a non-200 response code: {} and error {}'.format(
-                    layout_response.status_code,
-                    layout_response.text
-                )
-            )
+        layout_json = self.get_survey_data_layouts(survey_id)
         layout_id = None
-        for layout in layout_response.json():
+        for layout in layout_json:
             if layout.get('name') == 'Default':
                 layout_id = layout.get('id')
         if layout_id is None:
             raise CmixError(
-                'Layouts response did not contain a "Default" layout. Response Code: {}, Body {}'.format(
-                    layout_response.status_code,
-                    layout_response.content
-                )
+                'Layouts response did not contain a "Default" layout.'
             )
 
         archive_json['dataLayoutId'] = layout_id
