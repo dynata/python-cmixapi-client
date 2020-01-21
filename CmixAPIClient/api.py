@@ -264,6 +264,19 @@ class CmixAPI(object):
     def get_survey_completes(self, survey_id):
         return self.get_survey_respondents(survey_id, "COMPLETE", True)
 
+    def get_survey_termination_codes(self, survey_id):
+        self.check_auth_headers()
+        termination_codes_url = '{}/surveys/{}/termination-codes'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
+        termination_codes_response = requests.get(termination_codes_url, headers=self._authentication_headers)
+        if termination_codes_response.status_code != 200:
+            raise CmixError(
+                'CMIX returned a non-200 response code while getting termination_codes: {} and error {}'.format(
+                    termination_codes_response.status_code,
+                    termination_codes_response.text
+                )
+            )
+        return termination_codes_response.json()
+
     def create_export_archive(self, survey_id, export_type):
         self.check_auth_headers()
         archive_url = '{}/surveys/{}/archives'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
