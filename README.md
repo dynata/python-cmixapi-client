@@ -34,6 +34,7 @@ A Python client library for the [Dynata Cmix API](https://wiki2.criticalmix.net/
     get_survey_locales(survey_id)
     get_survey_xml(survey_id)
     get_survey_simulations(survey_id)
+    get_survey_sources(survey_id)
     get_survey_test_url(survey_id)
     get_survey_respondents(survey_id, respondent_type, live)
     get_survey_status(survey_id)
