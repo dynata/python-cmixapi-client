@@ -348,3 +348,16 @@ class CmixAPI(object):
         response_json = response.json()
         self.update_project(response_json.get('projectId'), status=self.SURVEY_STATUS_DESIGN)
         return response_json
+
+    def get_survey_simulations(self, survey_id):
+        self.check_auth_headers()
+        simulations_url = '{}/surveys/{}/simulations'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
+        simulations_response = requests.get(simulations_url, headers=self._authentication_headers)
+        if simulations_response.status_code != 200:
+            raise CmixError(
+                'CMIX returned a non-200 response code while getting simulations: {} and error {}'.format(
+                    simulations_response.status_code,
+                    simulations_response.text
+                )
+            )
+        return simulations_response.json()
