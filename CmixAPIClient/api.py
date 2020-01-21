@@ -235,6 +235,19 @@ class CmixAPI(object):
             raise CmixError('Get Survey Status returned without a status. Response: {}'.format(status_response.json()))
         return status.lower()
 
+    def get_survey_sections(self, survey_id):
+        self.check_auth_headers()
+        sections_url = '{}/surveys/{}/sections'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
+        sections_response = requests.get(sections_url, headers=self._authentication_headers)
+        if sections_response.status_code != 200:
+            raise CmixError(
+                'CMIX returned a non-200 response code while getting sections: {} and error {}'.format(
+                    sections_response.status_code,
+                    sections_response.text
+                )
+            )
+        return sections_response.json()
+
     def get_survey_sources(self, survey_id):
         self.check_auth_headers()
         sources_url = '{}/surveys/{}/sources'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
