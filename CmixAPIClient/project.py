@@ -28,3 +28,39 @@ class CmixProject(object):
         project_error = 'CMIX returned a non-200 response code while getting project groups'
         project_response = self.client.api_get(project_endpoint, project_error)
         return project_response
+
+    def get_links(self):
+        project_endpoint = 'projects/{}/links'.format(self.project_id)
+        project_error = 'CMIX returned a non-200 response code while getting project links'
+        project_response = self.client.api_get(project_endpoint, project_error)
+        return project_response
+
+    def get_full_links(self):
+        project_endpoint = 'projects/{}/full-links'.format(self.project_id)
+        project_error = 'CMIX returned a non-200 response code while getting project full links'
+        project_response = self.client.api_get(project_endpoint, project_error)
+        return project_response
+
+    def get_locales(self):
+        project_endpoint = 'projects/{}/locales'.format(self.project_id)
+        project_error = 'CMIX returned a non-200 response code while getting project locales'
+        project_response = self.client.api_get(project_endpoint, project_error)
+        return project_response
+
+    def get_markup_files(self):
+        project_endpoint = 'projects/{}/markup-files'.format(self.project_id)
+        project_error = 'CMIX returned a non-200 response code while getting project markup files'
+        project_response = self.client.api_get(project_endpoint, project_error)
+        return project_response
+
+    def get_respondent_links(self):
+        project_endpoint = 'projects/{}/respondent-links'.format(self.project_id)
+        project_error = 'CMIX returned a non-200 response code while getting project respondent links'
+        project_response = self.client.api_get(project_endpoint, project_error)
+        return project_response
+
+    def get_surveys(self):
+        project_endpoint = 'projects/{}/surveys'.format(self.project_id)
+        project_error = 'CMIX returned a non-200 response code while getting project surveys'
+        project_response = self.client.api_get(project_endpoint, project_error)
+        return project_response

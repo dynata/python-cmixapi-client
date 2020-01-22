@@ -51,3 +51,21 @@ class TestCmixProject(TestCase):
 
     def test_get_groups(self):
         self.helper_get('get_groups', '/{}/groups'.format(self.project_id))
+
+    def test_get_links(self):
+        self.helper_get('get_links', '/{}/links'.format(self.project_id))
+
+    def test_get_full_links(self):
+        self.helper_get('get_full_links', '/{}/full-links'.format(self.project_id))
+
+    def test_get_locales(self):
+        self.helper_get('get_locales', '/{}/locales'.format(self.project_id))
+
+    def test_get_markup_files(self):
+        self.helper_get('get_markup_files', '/{}/markup-files'.format(self.project_id))
+
+    def test_get_respondent_links(self):
+        self.helper_get('get_respondent_links', '/{}/respondent-links'.format(self.project_id))
+
+    def test_get_surveys(self):
+        self.helper_get('get_surveys', '/{}/surveys'.format(self.project_id))
