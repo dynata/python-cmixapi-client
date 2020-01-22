@@ -50,6 +50,7 @@ A Python client library for the [Dynata Cmix API](https://wiki2.criticalmix.net/
 
 ### CmixProject
 
+    get_groups()
     get_project()
     get_sources()
 

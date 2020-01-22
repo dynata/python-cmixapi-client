@@ -48,3 +48,6 @@ class TestCmixProject(TestCase):
 
     def test_get_sources(self):
         self.helper_get('get_sources', '/{}/sources'.format(self.project_id))
+
+    def test_get_groups(self):
+        self.helper_get('get_groups', '/{}/groups'.format(self.project_id))
