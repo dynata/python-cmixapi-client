@@ -22,6 +22,7 @@ class TestCmixAPI(TestCase):
         self.cmix_api = default_cmix_api()
         self.cmix_api._authentication_headers = {'Authorization': 'Bearer test'}
         self.survey_id = 1337
+        self.project_id = 1492
 
     def test_cmix_authentication_check(self):
         with self.assertRaises(CmixError):
