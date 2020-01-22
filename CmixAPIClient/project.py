@@ -11,6 +11,18 @@ class CmixProject(object):
         self.client = client
         self.project_id = project_id
 
+    def delete_project(self):
+        project_endpoint = 'projects/{}'.format(self.project_id)
+        project_error = 'CMIX returned a non-200 response code while deleting project'
+        project_response = self.client.api_delete(project_endpoint, project_error)
+        return project_response
+
+    def delete_group(self, group_id):
+        project_endpoint = 'projects/{}/groups/{}'.format(self.project_id, group_id)
+        project_error = 'CMIX returned a non-200 response code while deleting group'
+        project_response = self.client.api_delete(project_endpoint, project_error)
+        return project_response
+
     def get_project(self):
         project_endpoint = 'projects/{}'.format(self.project_id)
         project_error = 'CMIX returned a non-200 response code while getting project'
