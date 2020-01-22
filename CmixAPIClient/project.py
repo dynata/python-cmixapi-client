@@ -16,3 +16,9 @@ class CmixProject(object):
         project_error = 'CMIX returned a non-200 response code while getting project'
         project_response = self.client.api_get(project_endpoint, project_error)
         return project_response
+
+    def get_sources(self):
+        project_endpoint = 'projects/{}/sources'.format(self.project_id)
+        project_error = 'CMIX returned a non-200 response code while getting project sources'
+        project_response = self.client.api_get(project_endpoint, project_error)
+        return project_response
