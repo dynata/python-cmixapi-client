@@ -29,7 +29,7 @@ A Python client library for the [Dynata Cmix API](https://wiki2.criticalmix.net/
     authenticate(*args, **kwargs)
     fetch_banner_filter(survey_id, question_a, question_b, response_id)
     fetch_raw_results(survey_id, payload)
-    get_project(project_id)
+    get_projects()
     get_surveys(status, *args, **kwargs)
     get_survey_data_layouts(survey_id)
     get_survey_definition(survey_id)
@@ -50,9 +50,15 @@ A Python client library for the [Dynata Cmix API](https://wiki2.criticalmix.net/
 
 ### CmixProject
 
+    get_full_links()
     get_groups()
+    get_links()
+    get_locales()
+    get_markup_files()
     get_project()
+    get_respondent_links()
     get_sources()
+    get_surveys()
 
 ## Contributing
 

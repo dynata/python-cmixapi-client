@@ -418,3 +418,9 @@ class CmixAPI(object):
                 )
             )
         return simulations_response.json()
+
+    def get_projects(self):
+        project_endpoint = 'projects'
+        project_error = 'CMIX returned a non-200 response code while getting projects'
+        project_response = self.api_get(project_endpoint, project_error)
+        return project_response

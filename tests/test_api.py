@@ -24,6 +24,32 @@ class TestCmixAPI(TestCase):
         self.survey_id = 1337
         self.project_id = 1492
 
+    def helper_get(self, function_name, endpoint):
+        func = getattr(self.cmix_api, function_name)
+
+        # success case
+        with mock.patch('CmixAPIClient.api.requests') as mock_request:
+            mock_get = mock.Mock()
+            mock_get.status_code = 200
+            mock_get.json.return_value = {}
+            mock_request.get.return_value = mock_get
+
+            func()
+
+            base_url = CMIX_SERVICES['survey']['BASE_URL']
+            project_url = '{}/{}'.format(base_url, endpoint)
+            mock_request.get.assert_any_call(project_url, headers=self.cmix_api._authentication_headers)
+
+        # error case (survey not found)
+        with mock.patch('CmixAPIClient.api.requests') as mock_request:
+            mock_get = mock.Mock()
+            mock_get.status_code = 404
+            mock_get.json.return_value = {}
+            mock_request.get.return_value = mock_get
+
+            with self.assertRaises(CmixError):
+                func()
+
     def test_cmix_authentication_check(self):
         with self.assertRaises(CmixError):
             CmixAPI()
@@ -425,3 +451,6 @@ class TestCmixAPI(TestCase):
 
             with self.assertRaises(CmixError):
                 self.cmix_api.get_survey_simulations(self.survey_id)
+
+    def test_get_projects(self):
+        self.helper_get('get_projects', 'projects')
