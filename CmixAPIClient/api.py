@@ -139,6 +139,38 @@ class CmixAPI(object):
         response = requests.post(url, headers=self._authentication_headers, json=payload)
         return response.json()
 
+    def api_get(self, endpoint, error=''):
+        self.check_auth_headers()
+        url = '{}/{}'.format(CMIX_SERVICES['survey'][self.url_type], endpoint)
+        response = requests.get(url, headers=self._authentication_headers)
+        if response.status_code != 200:
+            if '' == error:
+                error = 'CMIX returned a non-200 response code'
+            raise CmixError(
+                '{}: {} and error {}'.format(
+                    error,
+                    response.status_code,
+                    response.text
+                )
+            )
+        return response.json()
+
+    def api_delete(self, endpoint, error=''):
+        self.check_auth_headers()
+        url = '{}/{}'.format(CMIX_SERVICES['survey'][self.url_type], endpoint)
+        response = requests.delete(url, headers=self._authentication_headers)
+        if response.status_code != 200:
+            if '' == error:
+                error = 'CMIX returned a non-200 response code'
+            raise CmixError(
+                '{}: {} and error {}'.format(
+                    error,
+                    response.status_code,
+                    response.text
+                )
+            )
+        return response.json()
+
     def get_surveys(self, status, *args, **kwargs):
         '''kwargs:
 
@@ -402,3 +434,9 @@ class CmixAPI(object):
                 )
             )
         return simulations_response.json()
+
+    def get_projects(self):
+        project_endpoint = 'projects'
+        project_error = 'CMIX returned a non-200 response code while getting projects'
+        project_response = self.api_get(project_endpoint, project_error)
+        return project_response
