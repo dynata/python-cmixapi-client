@@ -13,7 +13,8 @@ def default_cmix_api():
         username="test_username",
         password="test_password",
         client_id="test_client_id",
-        client_secret="test_client_secret"
+        client_secret="test_client_secret",
+        timeout=5
     )
 
 
@@ -38,7 +39,7 @@ class TestCmixAPI(TestCase):
 
             base_url = CMIX_SERVICES['survey']['BASE_URL']
             project_url = '{}/{}'.format(base_url, endpoint)
-            mock_request.get.assert_any_call(project_url, headers=self.cmix_api._authentication_headers)
+            mock_request.get.assert_any_call(project_url, headers=self.cmix_api._authentication_headers, timeout=5)
 
         # error case (survey not found)
         with mock.patch('CmixAPIClient.api.requests') as mock_request:
@@ -157,7 +158,7 @@ class TestCmixAPI(TestCase):
 
             base_url = CMIX_SERVICES['survey']['BASE_URL']
             surveys_url = '{}/surveys/{}/data-layouts'.format(base_url, self.survey_id)
-            mock_request.get.assert_any_call(surveys_url, headers=self.cmix_api._authentication_headers)
+            mock_request.get.assert_any_call(surveys_url, headers=self.cmix_api._authentication_headers, timeout=5)
 
         # error case (survey not found)
         with mock.patch('CmixAPIClient.api.requests') as mock_request:
@@ -182,7 +183,7 @@ class TestCmixAPI(TestCase):
 
             base_url = CMIX_SERVICES['survey']['BASE_URL']
             surveys_url = '{}/surveys/{}'.format(base_url, self.survey_id)
-            mock_request.get.assert_any_call(surveys_url, headers=self.cmix_api._authentication_headers)
+            mock_request.get.assert_any_call(surveys_url, headers=self.cmix_api._authentication_headers, timeout=5)
 
     def test_get_survey_status_error_handled(self):
         self.cmix_api._authentication_headers = {'Authentication': 'Bearer test'}
@@ -210,7 +211,7 @@ class TestCmixAPI(TestCase):
 
             base_url = CMIX_SERVICES['survey']['BASE_URL']
             surveys_url = '{}/surveys/{}/sections'.format(base_url, self.survey_id)
-            mock_request.get.assert_any_call(surveys_url, headers=self.cmix_api._authentication_headers)
+            mock_request.get.assert_any_call(surveys_url, headers=self.cmix_api._authentication_headers, timeout=5)
 
         # error case (survey not found)
         with mock.patch('CmixAPIClient.api.requests') as mock_request:
@@ -235,7 +236,7 @@ class TestCmixAPI(TestCase):
 
             base_url = CMIX_SERVICES['survey']['BASE_URL']
             surveys_url = '{}/surveys/{}/locales'.format(base_url, self.survey_id)
-            mock_request.get.assert_any_call(surveys_url, headers=self.cmix_api._authentication_headers)
+            mock_request.get.assert_any_call(surveys_url, headers=self.cmix_api._authentication_headers, timeout=5)
 
         # error case (survey not found)
         with mock.patch('CmixAPIClient.api.requests') as mock_request:
@@ -260,7 +261,7 @@ class TestCmixAPI(TestCase):
 
             base_url = CMIX_SERVICES['survey']['BASE_URL']
             surveys_url = '{}/surveys/{}/sources'.format(base_url, self.survey_id)
-            mock_request.get.assert_any_call(surveys_url, headers=self.cmix_api._authentication_headers)
+            mock_request.get.assert_any_call(surveys_url, headers=self.cmix_api._authentication_headers, timeout=5)
 
         # error case (survey not found)
         with mock.patch('CmixAPIClient.api.requests') as mock_request:
@@ -326,7 +327,7 @@ class TestCmixAPI(TestCase):
 
             base_url = CMIX_SERVICES['survey']['BASE_URL']
             surveys_url = '{}/surveys/{}/termination-codes'.format(base_url, self.survey_id)
-            mock_request.get.assert_any_call(surveys_url, headers=self.cmix_api._authentication_headers)
+            mock_request.get.assert_any_call(surveys_url, headers=self.cmix_api._authentication_headers, timeout=5)
 
         # error case (survey not found)
         with mock.patch('CmixAPIClient.api.requests') as mock_request:
@@ -355,12 +356,16 @@ class TestCmixAPI(TestCase):
             ]
             self.cmix_api.get_surveys('LIVE')
             expected_url = '{}/surveys?status={}'.format(CMIX_SERVICES['survey']['BASE_URL'], 'LIVE')
-            mock_request.get.assert_any_call(expected_url, headers=mock.ANY)
+            mock_request.get.assert_any_call(expected_url, headers=mock.ANY, timeout=5)
 
             expected_url_with_params = '{}/surveys?status={}&hello=world&test=params'.format(
                 CMIX_SERVICES['survey']['BASE_URL'], 'LIVE')
             self.cmix_api.get_surveys('LIVE', extra_params=["hello=world", "test=params"])
-            mock_request.get.assert_any_call(expected_url_with_params, headers=self.cmix_api._authentication_headers)
+            mock_request.get.assert_any_call(
+                expected_url_with_params,
+                headers=self.cmix_api._authentication_headers,
+                timeout=5
+            )
 
     def test_fetch_banner_filter(self):
         with mock.patch('CmixAPIClient.api.requests') as mock_request:
@@ -394,7 +399,7 @@ class TestCmixAPI(TestCase):
                     'responseId': response_id
                 }]
             }
-            mock_request.post.assert_any_call(expected_url, json=expected_payload, headers=mock.ANY)
+            mock_request.post.assert_any_call(expected_url, json=expected_payload, headers=mock.ANY, timeout=5)
 
     def test_get_archive_status(self):
         survey_id = 1337
@@ -440,7 +445,7 @@ class TestCmixAPI(TestCase):
 
             base_url = CMIX_SERVICES['survey']['BASE_URL']
             surveys_url = '{}/surveys/{}/simulations'.format(base_url, self.survey_id)
-            mock_request.get.assert_any_call(surveys_url, headers=self.cmix_api._authentication_headers)
+            mock_request.get.assert_any_call(surveys_url, headers=self.cmix_api._authentication_headers, timeout=5)
 
         # error case (survey not found)
         with mock.patch('CmixAPIClient.api.requests') as mock_request:

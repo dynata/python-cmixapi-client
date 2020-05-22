@@ -31,7 +31,7 @@ class TestCmixProject(TestCase):
 
             base_url = CMIX_SERVICES['survey']['BASE_URL']
             project_url = '{}/projects{}'.format(base_url, endpoint)
-            mock_request.get.assert_any_call(project_url, headers=self.cmix_api._authentication_headers)
+            mock_request.get.assert_any_call(project_url, headers=self.cmix_api._authentication_headers, timeout=5)
 
         # error case (survey not found)
         with mock.patch('CmixAPIClient.api.requests') as mock_request:
@@ -61,7 +61,7 @@ class TestCmixProject(TestCase):
 
             base_url = CMIX_SERVICES['survey']['BASE_URL']
             project_url = '{}/projects{}'.format(base_url, endpoint)
-            mock_request.delete.assert_any_call(project_url, headers=self.cmix_api._authentication_headers)
+            mock_request.delete.assert_any_call(project_url, headers=self.cmix_api._authentication_headers, timeout=5)
 
         # error case (survey not found)
         with mock.patch('CmixAPIClient.api.requests') as mock_request:
