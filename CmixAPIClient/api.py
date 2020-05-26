@@ -34,6 +34,7 @@ CMIX_SERVICES = {
     },
 }
 
+DEFAULT_API_TIMEOUT = 16
 
 # - it seems like this class would work better as a singleton - and
 #   maybe the method above (default_cmix_api) could create the singleton,
@@ -43,6 +44,8 @@ CMIX_SERVICES = {
 # - default_cmix_api could also check_auth_headers before returning the
 #   singleton - if it's not authenticated it could try authenticating or
 #   creating a new instance THEN authenticating
+
+
 class CmixAPI(object):
     # valid survey statuses
     SURVEY_STATUS_DESIGN = 'DESIGN'
@@ -52,7 +55,9 @@ class CmixAPI(object):
     # valid extra survey url params
     SURVEY_PARAMS_STATUS_AFTER = 'statusAfter'
 
-    def __init__(self, username=None, password=None, client_id=None, client_secret=None, test=False, *args, **kwargs):
+    def __init__(
+            self, username=None, password=None, client_id=None, client_secret=None, test=False, timeout=None, *args, **kwargs
+    ):
         if None in [username, password, client_id, client_secret]:
             raise CmixError("All authentication data is required.")
         self.username = username
@@ -62,6 +67,7 @@ class CmixAPI(object):
         self.url_type = 'BASE_URL'
         if test is True:
             self.url_type = 'TEST_URL'
+        self.timeout = timeout if timeout is not None else DEFAULT_API_TIMEOUT
 
     def check_auth_headers(self):
         if self._authentication_headers is None:
@@ -78,7 +84,12 @@ class CmixAPI(object):
 
         auth_url = '{}/access-token'.format(CMIX_SERVICES['auth'][self.url_type])
         try:
-            auth_response = requests.post(auth_url, json=auth_payload, headers={"Content-Type": "application/json"})
+            auth_response = requests.post(
+                auth_url,
+                json=auth_payload,
+                headers={"Content-Type": "application/json"},
+                timeout=self.timeout
+            )
             if auth_response.status_code != 200:
                 raise CmixError(
                     'CMIX returned a non-200 response code: {} and error {}'.format(
@@ -118,7 +129,7 @@ class CmixAPI(object):
                 'responseId': response_id
             }]
         }
-        response = requests.post(url, headers=self._authentication_headers, json=payload)
+        response = requests.post(url, headers=self._authentication_headers, json=payload, timeout=self.timeout)
         return response.json()
 
     def fetch_raw_results(self, survey_id, payload):
@@ -136,13 +147,13 @@ class CmixAPI(object):
         log.debug('Requesting raw results for CMIX survey {}'.format(survey_id))
         base_url = CMIX_SERVICES['reporting'][self.url_type]
         url = '{}/surveys/{}/response-counts'.format(base_url, survey_id)
-        response = requests.post(url, headers=self._authentication_headers, json=payload)
+        response = requests.post(url, headers=self._authentication_headers, json=payload, timeout=self.timeout)
         return response.json()
 
     def api_get(self, endpoint, error=''):
         self.check_auth_headers()
         url = '{}/{}'.format(CMIX_SERVICES['survey'][self.url_type], endpoint)
-        response = requests.get(url, headers=self._authentication_headers)
+        response = requests.get(url, headers=self._authentication_headers, timeout=self.timeout)
         if response.status_code != 200:
             if '' == error:
                 error = 'CMIX returned a non-200 response code'
@@ -158,7 +169,7 @@ class CmixAPI(object):
     def api_delete(self, endpoint, error=''):
         self.check_auth_headers()
         url = '{}/{}'.format(CMIX_SERVICES['survey'][self.url_type], endpoint)
-        response = requests.delete(url, headers=self._authentication_headers)
+        response = requests.delete(url, headers=self._authentication_headers, timeout=self.timeout)
         if response.status_code != 200:
             if '' == error:
                 error = 'CMIX returned a non-200 response code'
@@ -186,7 +197,7 @@ class CmixAPI(object):
         extra_params = kwargs.get('extra_params')
         if extra_params is not None:
             surveys_url = self.add_extra_url_params(surveys_url, extra_params)
-        surveys_response = requests.get(surveys_url, headers=self._authentication_headers)
+        surveys_response = requests.get(surveys_url, headers=self._authentication_headers, timeout=self.timeout)
         return surveys_response.json()
 
     def add_extra_url_params(self, url, params):
@@ -198,7 +209,7 @@ class CmixAPI(object):
     def get_survey_data_layouts(self, survey_id):
         self.check_auth_headers()
         data_layouts_url = '{}/surveys/{}/data-layouts'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
-        data_layouts_response = requests.get(data_layouts_url, headers=self._authentication_headers)
+        data_layouts_response = requests.get(data_layouts_url, headers=self._authentication_headers, timeout=self.timeout)
         if data_layouts_response.status_code != 200:
             raise CmixError(
                 'CMIX returned a non-200 response code while getting data_layouts: {} and error {}'.format(
@@ -211,19 +222,19 @@ class CmixAPI(object):
     def get_survey_definition(self, survey_id):
         self.check_auth_headers()
         definition_url = '{}/surveys/{}/definition'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
-        definition_response = requests.get(definition_url, headers=self._authentication_headers)
+        definition_response = requests.get(definition_url, headers=self._authentication_headers, timeout=self.timeout)
         return definition_response.json()
 
     def get_survey_xml(self, survey_id):
         self.check_auth_headers()
         xml_url = '{}/surveys/{}'.format(CMIX_SERVICES['file'][self.url_type], survey_id)
-        xml_response = requests.get(xml_url, headers=self._authentication_headers)
+        xml_response = requests.get(xml_url, headers=self._authentication_headers, timeout=self.timeout)
         return xml_response.content
 
     def get_survey_test_url(self, survey_id):
         self.check_auth_headers()
         survey_url = '{}/surveys/{}'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
-        survey_response = requests.get(survey_url, headers=self._authentication_headers)
+        survey_response = requests.get(survey_url, headers=self._authentication_headers, timeout=self.timeout)
         test_token = survey_response.json().get('testToken', None)
         if test_token is None:
             raise CmixError('Survey endpoint for CMIX ID {} did not return a test token.'.format(survey_id))
@@ -242,13 +253,13 @@ class CmixAPI(object):
             "LIVE" if live else "TEST",
             respondent_type,
         )
-        respondents_response = requests.get(respondents_url, headers=self._authentication_headers)
+        respondents_response = requests.get(respondents_url, headers=self._authentication_headers, timeout=self.timeout)
         return respondents_response.json()
 
     def get_survey_locales(self, survey_id):
         self.check_auth_headers()
         locales_url = '{}/surveys/{}/locales'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
-        locales_response = requests.get(locales_url, headers=self._authentication_headers)
+        locales_response = requests.get(locales_url, headers=self._authentication_headers, timeout=self.timeout)
         if locales_response.status_code != 200:
             raise CmixError(
                 'CMIX returned a non-200 response code while getting locales: {} and error {}'.format(
@@ -261,7 +272,7 @@ class CmixAPI(object):
     def get_survey_status(self, survey_id):
         self.check_auth_headers()
         status_url = '{}/surveys/{}'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
-        status_response = requests.get(status_url, headers=self._authentication_headers)
+        status_response = requests.get(status_url, headers=self._authentication_headers, timeout=self.timeout)
         status = status_response.json().get('status', None)
         if status is None:
             raise CmixError('Get Survey Status returned without a status. Response: {}'.format(status_response.json()))
@@ -270,7 +281,7 @@ class CmixAPI(object):
     def get_survey_sections(self, survey_id):
         self.check_auth_headers()
         sections_url = '{}/surveys/{}/sections'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
-        sections_response = requests.get(sections_url, headers=self._authentication_headers)
+        sections_response = requests.get(sections_url, headers=self._authentication_headers, timeout=self.timeout)
         if sections_response.status_code != 200:
             raise CmixError(
                 'CMIX returned a non-200 response code while getting sections: {} and error {}'.format(
@@ -283,7 +294,7 @@ class CmixAPI(object):
     def get_survey_sources(self, survey_id):
         self.check_auth_headers()
         sources_url = '{}/surveys/{}/sources'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
-        sources_response = requests.get(sources_url, headers=self._authentication_headers)
+        sources_response = requests.get(sources_url, headers=self._authentication_headers, timeout=self.timeout)
         if sources_response.status_code != 200:
             raise CmixError(
                 'CMIX returned a non-200 response code while getting sources: {} and error {}'.format(
@@ -299,7 +310,11 @@ class CmixAPI(object):
     def get_survey_termination_codes(self, survey_id):
         self.check_auth_headers()
         termination_codes_url = '{}/surveys/{}/termination-codes'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
-        termination_codes_response = requests.get(termination_codes_url, headers=self._authentication_headers)
+        termination_codes_response = requests.get(
+            termination_codes_url,
+            headers=self._authentication_headers,
+            timeout=self.timeout
+        )
         if termination_codes_response.status_code != 200:
             raise CmixError(
                 'CMIX returned a non-200 response code while getting termination_codes: {} and error {}'.format(
@@ -322,7 +337,7 @@ class CmixAPI(object):
             "terminates": False
         }
 
-        archive_response = requests.post(archive_url, json=payload, headers=headers)
+        archive_response = requests.post(archive_url, json=payload, headers=headers, timeout=self.timeout)
         if archive_response.status_code != 200:
             raise CmixError(
                 'CMIX returned a non-200 response code: {} and error {}'.format(
@@ -366,7 +381,7 @@ class CmixAPI(object):
             layout_id,
             archive_id  # The archive ID on CMIX.
         )
-        archive_response = requests.get(archive_url, headers=self._authentication_headers)
+        archive_response = requests.get(archive_url, headers=self._authentication_headers, timeout=self.timeout)
         if archive_response.status_code > 299:
             raise CmixError(
                 'CMIX returned an invalid response code getting archive status: HTTP {} and error {}'.format(
@@ -390,7 +405,7 @@ class CmixAPI(object):
             raise CmixError("No update data was provided for CMIX Project {}".format(project_id))
 
         url = '{}/projects/{}'.format(CMIX_SERVICES['survey'][self.url_type], project_id)
-        response = requests.patch(url, json=payload_json, headers=self._authentication_headers)
+        response = requests.patch(url, json=payload_json, headers=self._authentication_headers, timeout=self.timeout)
         if response.status_code > 299:
             raise CmixError(
                 'CMIX returned an invalid response code during project update: HTTP {} and error {}'.format(
@@ -408,7 +423,7 @@ class CmixAPI(object):
 
         url = '{}/surveys/data'.format(CMIX_SERVICES['file'][self.url_type])
         payload = {"data": xml_string}
-        response = requests.post(url, payload, headers=self._authentication_headers)
+        response = requests.post(url, payload, headers=self._authentication_headers, timeout=self.timeout)
         if response.status_code > 299:
             raise CmixError(
                 'Error while creating survey. CMIX responded with status' +
@@ -425,7 +440,7 @@ class CmixAPI(object):
     def get_survey_simulations(self, survey_id):
         self.check_auth_headers()
         simulations_url = '{}/surveys/{}/simulations'.format(CMIX_SERVICES['survey'][self.url_type], survey_id)
-        simulations_response = requests.get(simulations_url, headers=self._authentication_headers)
+        simulations_response = requests.get(simulations_url, headers=self._authentication_headers, timeout=self.timeout)
         if simulations_response.status_code != 200:
             raise CmixError(
                 'CMIX returned a non-200 response code while getting simulations: {} and error {}'.format(
