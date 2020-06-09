@@ -375,8 +375,9 @@ class CmixAPI(object):
             raise CmixError(
                 'Error while updating archie status: CMIX archive ID is None. Pop Archive ID: {}'.format(archive_id)
             )
+        base_url = CMIX_SERVICES['survey'][self.url_type]
         archive_url = '{}/surveys/{}/data-layouts/{}/archives/{}'.format(
-            CMIX_SERVICES['survey']["BASE_URL"],
+            base_url,
             survey_id,
             layout_id,
             archive_id  # The archive ID on CMIX.
