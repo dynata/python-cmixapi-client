@@ -74,8 +74,7 @@ class CmixAPI(object):
             *args,
             **kwargs
     ):
-        """Construct a new ``CmixAPI`` object which represents the API client.
-
+        """
         :param username: The username used to authenticate against the API. Defaults
           to :obj:`None <python:None>`, but is required and will raise an exception
           if missing.
@@ -714,7 +713,7 @@ class CmixAPI(object):
           .. code-block:: python
 
             .get_survey_respondents(survey_id,
-                                    respondetType = 'COMPLETE',
+                                    respondentType = 'COMPLETE',
                                     live = True)
 
         :param survey_id: The unique ID of the survey whose
@@ -1001,9 +1000,9 @@ class CmixAPI(object):
 
         :type status: :class:`str <python:str>`
 
-        :returns: The :class:`Response <requests:Response>` object for the API
+        :returns: The :class:`requests.Response <requests:requests.Response>` object for the API
           request
-        :rtype: :class:`requests.Response <requests:Response>`
+        :rtype: :class:`requests.Response <requests:requests.Response>`
 
         :raises CmixError: if ``status`` was empty
 
@@ -1048,9 +1047,9 @@ class CmixAPI(object):
 
         :type xml_string: :class:`str <python:str>`
 
-        :returns: The :class:`Response <requests:Response>` object for the API
+        :returns: The :class:`requests.Response <requests:requests.Response>` object for the API
           request
-        :rtype: :class:`requests.Response <requests:Response>`
+        :rtype: :class:`requests.Response <requests:requests.Response>`
 
         :raises CmixError: if the API returns an HTTP Status Code greater than ``299``
 

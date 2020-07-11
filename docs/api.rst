@@ -41,13 +41,36 @@ For example:
 
 
 *********************
-Survey API Client
+Core API Client
 *********************
 
-The **Survey API Client** is the primary API client for interacting with the
-**Dynata Survey Authoring** system's survey API.
+.. _survey_api_client:
+
+The **Core API Client** is the primary API client for interacting with the
+**Dynata Survey Authoring** system's API.
 
 .. module:: CmixAPIClient.api
 
 .. autoclass:: CmixAPI
+  :members:
+
+------------------------
+
+*****************************
+Project API Client
+*****************************
+
+The **Project API Client** is the primary API client for interacting with
+individual :term:`Project` configurations within the Dynata Survey Authoring
+system.
+
+.. note::
+
+  As the documentation below makes clear, in order to instantiate and make use
+  of the **Project API Client**, you have to first instantiate and authenticate
+  a :ref:`Core API Client <survey_api_client>` instance.
+
+.. module:: CmixAPIClient.project
+
+.. autoclass:: CmixProject
   :members:
