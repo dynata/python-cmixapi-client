@@ -1,5 +1,3 @@
-import sys
-
 # Always prefer setuptools over distutils
 from setuptools import setup, find_packages
 # To use a consistent encoding
@@ -31,7 +29,7 @@ setup(
     # There are some restrictions on what makes a valid project name
     # specification here:
     # https://packaging.python.org/specifications/core-metadata/#name
-    name="python-cmixapi-client", # Required
+    name="python-cmixapi-client",  # Required
 
     # Versions should comply with PEP 440:
     # https://www.python.org/dev/peps/pep-0440/
@@ -101,7 +99,7 @@ setup(
         'License :: OSI Approved :: MIT License',
     ],
 
-    zip_safe = False,
+    zip_safe=False,
 
     # List additional URLs that are relevant to your project as a dict.
     #

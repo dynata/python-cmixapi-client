@@ -8,6 +8,7 @@ exclude =
   old,
   build,
   dist,
+  .py27,
   .py38,
   .py37,
   .py36,

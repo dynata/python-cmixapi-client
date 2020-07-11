@@ -65,12 +65,12 @@ class CmixAPI(object):
 
     def __init__(
             self,
-            username = None,
-            password = None,
-            client_id = None,
-            client_secret = None,
-            test = False,
-            timeout = None,
+            username=None,
+            password=None,
+            client_id=None,
+            client_secret=None,
+            test=False,
+            timeout=None,
             *args,
             **kwargs
     ):
@@ -255,7 +255,7 @@ class CmixAPI(object):
 
     def api_get(self,
                 endpoint,
-                error = ''):
+                error=''):
         """Execute a GET request against the Dynata Survey Authoring API.
 
         :param endpoint: The API endpoint that should be retrieved.
@@ -501,7 +501,7 @@ class CmixAPI(object):
         )
         return test_link
 
-    def get_survey_respondents(self, survey_id, respondent_type, live = False):
+    def get_survey_respondents(self, survey_id, respondent_type, live=False):
         """Retrieve metadata about survey :term:`respondents <Respondent>` for
         the indicated survey.
 
@@ -980,7 +980,7 @@ class CmixAPI(object):
 
         return archive_response.json()
 
-    def update_project(self, project_id, status = None):
+    def update_project(self, project_id, status=None):
         """Update the status of a survey project.
 
         :param project_id: The unique ID of the :term:`Project` whose status
@@ -1072,7 +1072,7 @@ class CmixAPI(object):
         response_json = response.json()
 
         self.update_project(response_json.get('projectId'),
-                            status = self.SURVEY_STATUS_DESIGN)
+                            status=self.SURVEY_STATUS_DESIGN)
 
         return response_json
 
