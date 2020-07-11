@@ -185,10 +185,10 @@ class CmixAPI(object):
         }
 
     def fetch_banner_filter(self, survey_id, question_a, question_b, response_id):
-        """Returns a :term:`Banner Filter` for a given :term:`survey`.
+        """Returns a :term:`Banner Filter` for a given :term:`survey <Survey>`.
 
         :returns: A :class:`dict <python:dict>` of the JSON representaton of the
-          :term:`banner filter`.
+          :term:`Banner Filter`.
         """
         self.check_auth_headers()
         log.debug(
@@ -343,7 +343,7 @@ class CmixAPI(object):
 
         :type extra_params: :class:`list <python:list>` of :class:`str <python:str>`
 
-        :returns: A collection of :term:`surveys <survey>` that meet the
+        :returns: A collection of :term:`surveys <Survey>` that meet the
           criteria supplied to the method, where each survey is represented as a
           :class:`dict <python:dict>` with the following keys:
 

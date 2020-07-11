@@ -86,7 +86,7 @@ class CmixProject(object):
         return project_response
 
     def get_sources(self):
-        """Retrieve the sources for the :term:`project`.
+        """Retrieve the sources for the :term:`project <Project>`.
 
         .. todo::
 
@@ -112,7 +112,7 @@ class CmixProject(object):
         return project_response
 
     def get_groups(self):
-        """Retrieve :term:`Groups <Group>` defined for the :term:`project`.
+        """Retrieve :term:`Groups <Group>` defined for the :term:`project <Project>`.
 
         :returns: Collection of :term:`Group` objects as
           :class:`dict <python:dict>` objects with keys:
@@ -130,7 +130,7 @@ class CmixProject(object):
         return project_response
 
     def get_links(self):
-        """Retrieve :term:`Links` for the :term:`Project`.
+        """Retrieve :term:`Links <Link>` for the :term:`Project`.
 
         :returns: Collection of :term:`Link` objects as
           :class:`dict <python:dict>` objects with keys:
@@ -148,7 +148,7 @@ class CmixProject(object):
         return project_response
 
     def get_full_links(self):
-        """Retrieve :term:`Links` for the :term:`Project`.
+        """Retrieve :term:`Links <Link>` for the :term:`Project`.
 
         .. todo::
 
@@ -235,7 +235,7 @@ class CmixProject(object):
     def get_surveys(self):
         """Retrieve surveys associated with the :term:`Project`.
 
-        :returns: A collection of :term:`surveys <survey>` associated with the
+        :returns: A collection of :term:`surveys <Survey>` associated with the
           :term:`Project`, where each survey is represented as a
           :class:`dict <python:dict>` with the following keys:
 

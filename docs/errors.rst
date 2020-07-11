@@ -15,8 +15,6 @@ Error Reference
 Handling Errors
 *******************
 
-.. tip::
-
 When functions within the library fail, they raise exceptions. There are three
 ways for exceptions to provide you with information that is useful in different
 circumstances:
