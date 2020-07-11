@@ -7,8 +7,6 @@ Contributing to the Dynata Survey Authoring Python Client
   As a general rule of thumb, the **Dynata Survey Authoring Python Client**
   applies :pep:`PEP 8 <8>` styling, with some important differences.
 
-.. include:: _unit_tests_code_coverage.rst
-
 .. sidebar:: What makes an API idiomatic?
 
   One of our favorite ways of thinking about idiomatic design comes from a `talk

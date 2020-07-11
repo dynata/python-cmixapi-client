@@ -13,7 +13,7 @@ Testing Philosophy
 .. note::
 
   Unit tests for the **Dynata Survey Authoring** library are written using
-  :doc:`unittest <python:unittest>` and managed/executed using `pytest`_.
+  :mod:`unittest <python:unittest>` and managed/executed using `pytest`_.
 
 There are many schools of thought when it comes to test design. When building
 the **Dynata Survey Authoring Python Library**, we decided to focus on
@@ -50,11 +50,13 @@ Linting
 
 Linting software is strongly recommended to improve code quality and maintain
 readability in Python projects. Python's official linting package is called
-:doc:`pycodestyle`, but another useful linting package is called
-:doc:`flake8 <flake8:home>`.
+:doc:`pycodestyle <pycodestyle:index>`, but another useful linting package is called
+:doc:`flake8 <flake8:index>`.
 
-Flake8 runs three different linters on your code, including pycodestyle, and a
-package called PyFlakes that checks for things like unused imports.
+Flake8 runs three different linters on your code, including
+:doc:`pycodestyle <pycodestyle:index>` and a package called
+`PyFlakes <https://github.com/PyCQA/pyflakes>`_ that checks for things like
+unused imports.
 
 To lint the files:
 

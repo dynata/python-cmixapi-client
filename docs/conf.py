@@ -110,7 +110,10 @@ add_module_names = False
 
 # Example configuration for intersphinx: refer to the Python standard library.
 intersphinx_mapping = {
-'python': ('https://docs.python.org/3.8', None)
+    'python': ('https://docs.python.org/3.8', None),
+    'requests': ('https://2.python-requests.org/en/master/', None),
+    'flake8': ('https://flake8.pycqa.org/en/master/', None),
+    'pycodestyle': ('https://pycodestyle.pycqa.org/en/latest/', None),
 }
 
 # -- Options for todo extension ----------------------------------------------

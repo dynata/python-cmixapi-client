@@ -14,13 +14,10 @@ Dynata Survey Authoring (Cmix) Python Client
 **Python library for programmatic interaction with the Dynata Survey Authoring
 tool (Cmix)**
 
-.. sidebar:: Version Compatability
+.. sidebar:: Version Compatibility
 
   The **Dynata Survey Authoring** client is designed to be compatible with
   Python 3.6 or higher.
-
-.. include:: _unit_tests_code_coverage.rst
-
 
 .. toctree::
   :hidden:
