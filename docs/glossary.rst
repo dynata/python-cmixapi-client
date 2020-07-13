@@ -19,6 +19,12 @@ Glossary
     A definition of the structure of :term:`variables <Variable>` to include in
     a data file produced from collected or simulated survey data.
 
+  Data Point
+    A set of information about a specific response to a particular survey question.
+    A data point includes information about the type of survey question, the
+    value of the response (i.e. "what the respondent said"), and the number/percentage
+    of respondents who answered with that response.
+
   Dynata Insights Platform
     The unified end-to-end platform developed and offered by Dynata to provide
     comprehensive access to audiences, survey authoring, and insights from

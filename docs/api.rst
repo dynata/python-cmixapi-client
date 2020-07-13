@@ -6,6 +6,8 @@ API Reference
   :depth: 3
   :backlinks: entry
 
+---------------
+
 **************************************************
 Instantiating the API Client and Authenticating
 **************************************************

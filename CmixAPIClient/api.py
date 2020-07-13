@@ -218,30 +218,127 @@ class CmixAPI(object):
         return response.json()
 
     def fetch_raw_results(self, survey_id, payload):
-        """Retrieve the identifiers of the questions contained in a given survey.
+        """Retrieve data collected through the survey indicated by ``survey_id``.
 
         :param survey_id: The unique identifier of the survey whose raw results
           should be retrieved.
 
         :param payload: A collection of :class:`dict <python:dict>` objects where each
-          object provides the identifier of a question within the survey that
-          should be returned.
+          object provides the identifier of a question within the survey whose results
+          should be returned. The keys expected are:
+
+          * ``testYn``: Indicates whether to return data from respondent records
+            collected from real/live data collection or from simulated/test data.
+            Accepts either ``LIVE`` or ``TEST``, respectively.
+          * ``status``: Indicates whether to return data from respondents who
+            successfully completed the survey or respondents who were terminated
+            before completion. Accepts either ``COMPLETE`` or ``TERMINATE``,
+            respectively.
+          * ``counts``: A collection of :class:`dict <python:dict>` objects that
+            determines those survey questions for which result data should be
+            returned. Each :class:`dict <python:dict>` should have a key:
+
+            * ``questionId``: The unique identifier of the survey question.
+
+          * ``filters`` (*optional*): A collection of :class:`dict <python:dict>`
+            objects where each object indicates a filter to apply to the data
+            points returned by the API. Each :class:`dict <python:dict>` requires
+            two keys:
+
+            * ``variableId`` (:class:`int <python:int>`): the unique ID of the
+              variable that you wish to use as a filter criteria
+            * ``responseId`` (:class:`int <python:int>`): the ID of the
+              possible response that you wish to include in the result set
+
+              .. note::
+
+                Corresponds to the ``RPS_ID`` in the result returned.
 
           For example:
 
           .. code-block:: python
 
-            [
-              { 'questionId': 122931 },
-              { 'questionId': 123456 },
-              ...
-            ]
+            {
+                'testYN': 'LIVE',
+                'status': 'COMPLETE',
+                'counts': [
+                    { 'questionId': 122931 },
+                    { 'questionId': 123456 },
+                    ...
+                ],
+                'filters': [
+                    {
+                        'variableId': 12345,
+                        'responseId': 54321
+                    },
+                    ...
+                ]
+            }
 
         :type payload: :class:`list <python:list>` of :class:`dict <python:dict>`
 
-        :returns: A :class:`dict <python:dict>` of the JSON representaton of the
-          respondent values for the survey questions indicated in the
-          ``payload``.
+        :returns: A collection of :class:`dict <python:dict>` objects where each
+          object represents a single :term:`data point <Data Point>` collected
+          in the survey from a survey question indicated in the ``payload``. Keys
+          returned are:
+
+          * ``questionId``: The unique ID of the survey question that generated
+            the data point
+          * ``CNT``: The raw unweighted number of respondents that answered the
+            survey question with this response.
+
+            .. caution::
+
+              Respondents may be double-counted within a single question if the
+              question supports the simultaneous selection of multiple responses,
+              therefore calculating the sum of ``CNT`` values is not an appropriate
+              operation for most use cases.
+
+          * ``NAME``: The name for the type of question that was presented to the
+            respondent. May contain the following values:
+
+            * TBD
+
+            .. todo::
+
+              * Populate the list of possible values.
+
+            .. note::
+
+              This is **not** the "question name" or "survey variable code".
+
+          * ``DECIMAL``: The percentage of respondents who answered the question
+            with this response, expressed as a decimal value in the range
+            ``0 - 1``.
+          * ``STR_VALUE``: For questions that have textual response options, the
+            single response represented by the data point. For example, for a question
+            related to "Gender", one ``STR_VALUE`` of a data point may be "Male".
+
+            .. note::
+
+              * If the response selected was "Other" with the option of inputting
+                a custom text value, such a custom text value will appear in the
+                ``STR_VALUE`` field for the question.
+              * If a text value is inappropriate for the question type (e.g. if
+                the question type is numeric), will be :obj:`None <python:None>`.
+
+          * ``NUM_VALUE``: For questions that have ``NUMERIC`` as their type, this
+            value will contain the numeric value of a response.
+          * ``RPS_ID``: The identifier for the data point.
+
+            .. caution::
+
+              These identifiers are not unique and are not sortable.
+
+          * ``TOTAL``: The total number of respondents who responded to the question.
+
+            .. todo::
+
+              Determine if this corresponds to the total number of respondents in
+              general (vs. excluding those who may have had this question skipped
+              due to survey logic)
+
+        :rtype: :class:`list <python:list>` of :class:`dict <python:dict>`
 
         """
         self.check_auth_headers()
@@ -467,7 +564,13 @@ class CmixAPI(object):
           retrieved.
 
         :returns: The XML representation of the :term:`Survey Definition`.
+
+          .. seealso::
+
+            * :doc:`The Survey Definition <survey_xml>`
+
         :rtype: :class:`str <python:str>` containing XML
+
         """
         self.check_auth_headers()
         xml_url = '{}/surveys/{}'.format(CMIX_SERVICES['file'][self.url_type], survey_id)
@@ -1040,12 +1143,14 @@ class CmixAPI(object):
           ``DESIGN``
 
         :param xml_string: A complete definition of the survey in XML format.
+          For more information, please see :doc:`The Survey Definition <survey_xml>`.
 
-          .. todo::
+          .. seealso::
 
-            Document the XML structure of the survey.
+            * :doc:`The Survey Definition <survey_xml>`
 
-        :type xml_string: :class:`str <python:str>`
+        :type xml_string: :class:`str <python:str>` that validates
+          to :doc:`the Survey Definition <survey_xml>`
 
         :returns: The :class:`requests.Response <requests:requests.Response>` object for the API
           request
