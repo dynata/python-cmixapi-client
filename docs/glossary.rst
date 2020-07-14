@@ -77,11 +77,8 @@ Glossary
     One :term:`Project` may have many surveys.
 
   Survey Definition
-    TBD
-
-    .. todo::
-
-      Populate the definition.
+    A human-and-machine-readable document that describes the survey content,
+    logic, and visual representation.
 
   Survey Section
     TBD

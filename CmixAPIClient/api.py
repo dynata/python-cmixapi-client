@@ -557,19 +557,20 @@ class CmixAPI(object):
         return definition_response.json()
 
     def get_survey_xml(self, survey_id):
-        """Retrieve the XML representation of the :term:`Survey Definition` for
-        the indicated survey.
+        """Retrieve the source code (:term:`Survey Definition`) for the indicated
+        survey.
 
         :param survey_id: The unique ID of the survey whose definition should be
           retrieved.
 
-        :returns: The XML representation of the :term:`Survey Definition`.
+        :returns: The source code for the :term:`Survey Definition`.
 
           .. seealso::
 
-            * :doc:`The Survey Definition <survey_xml>`
+            * :doc:`The Survey Definition <survey_definition/index>`
 
-        :rtype: :class:`str <python:str>` containing XML
+        :rtype: :class:`str <python:str>` containing a
+          :doc:`Survey Definition <survey_definition/index>`
 
         """
         self.check_auth_headers()
@@ -1143,14 +1144,14 @@ class CmixAPI(object):
           ``DESIGN``
 
         :param xml_string: A complete definition of the survey in XML format.
-          For more information, please see :doc:`The Survey Definition <survey_xml>`.
+          For more information, please see :doc:`The Survey Definition <survey_definition/index>`.
 
           .. seealso::
 
-            * :doc:`The Survey Definition <survey_xml>`
+            * :doc:`The Survey Definition <survey_definition/index>`
 
         :type xml_string: :class:`str <python:str>` that validates
-          to :doc:`the Survey Definition <survey_xml>`
+          to :doc:`the Survey Definition <survey_definition/index>`
 
         :returns: The :class:`requests.Response <requests:requests.Response>` object for the API
           request

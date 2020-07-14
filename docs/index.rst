@@ -26,6 +26,10 @@ tool (Cmix)**
 
   Home <self>
   About Dynata Survey Authoring <about>
+  Using the Client <using>
+  The Survey Definition <survey_definition/index>
+  Defining Survey Questions <survey_definition/questions>
+  Managing Survey Logic <survey_definition/managing_logic>
   API Reference <api>
   Error Reference <errors>
   Contributor Guide <contributing>
