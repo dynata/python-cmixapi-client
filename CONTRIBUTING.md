@@ -4,9 +4,7 @@ This is an InnerSource python project. It is the work of someone who thought it 
 
 ### Maintainers
 
-This repository is maintained by
-
-1. [Bradley Wogsland](@wogsland)
+This repository is maintained by Dynata.
 
 ### Community Guidelines
 
